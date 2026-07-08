@@ -105,18 +105,17 @@ export default class StatusBarItem {
     if (this.isSpinning()) {
       this.statusBarItem.text = this.spinner.frames[this.curFrameOfSpinner] + ' ' + this.text;
     } else if (this.name === this.text) {
+      // Base (idle) state doubles as a connection/health indicator.
       switch (this.status) {
-        case Status.ok:
-          this.statusBarItem.text = this.text;
-          break;
         case Status.warn:
-          this.statusBarItem.text = `$(alert) ${this.text}`;
+          this.statusBarItem.text = `$(warning) ${this.text}`;
           break;
         case Status.error:
-          this.statusBarItem.text = `$(issue-opened) ${this.text}`;
+          this.statusBarItem.text = `$(error) ${this.text}`;
           break;
+        case Status.ok:
         default:
-          this.statusBarItem.text = this.text;
+          this.statusBarItem.text = `$(server-environment) ${this.text}`;
       }
     } else {
       this.statusBarItem.text = this.text;

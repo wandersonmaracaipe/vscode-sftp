@@ -2,6 +2,7 @@ import upath from './upath';
 import { promptForPassword } from '../host';
 import logger from '../logger';
 import app from '../app';
+import StatusBarItem from '../ui/statusBarItem';
 import { ConnectOption } from './remote-client/remoteClient';
 import {
   FileSystem,
@@ -84,13 +85,15 @@ class KeepAliveRemoteFs {
       })
       .then(
         () => {
-          app.sftpBarItem.reset();
           this.isValid = true;
+          app.sftpBarItem.updateStatus(StatusBarItem.Status.ok);
+          app.sftpBarItem.reset();
           return this.fs;
         },
         err => {
           this.fs.end();
           this.invalid('error');
+          app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
           throw err;
         }
       );
