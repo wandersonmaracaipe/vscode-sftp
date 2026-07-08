@@ -1,133 +1,142 @@
-# Valuor SFTP — SFTP/FTP sync for VS Code
+# Valuor SFTP — sincronização SFTP/FTP para o VS Code
 
-Maintained by **Valuor**. <br>
-Forked from [@Natizyskunk's vscode-sftp](https://github.com/Natizyskunk/vscode-sftp), itself a fork of the original (no longer maintained) [liximomo's SFTP plugin](https://github.com/liximomo/vscode-sftp.git). Full credit to the original authors.
+Mantido pela **Valuor**. <br>
+Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp), que por sua vez é um fork do [plugin SFTP original do liximomo](https://github.com/liximomo/vscode-sftp.git) (não mais mantido). Todo o crédito aos autores originais.
 
-- VS Code marketplace : https://marketplace.visualstudio.com/items?itemName=valuor.valuor-sftp <br>
-- Source & releases : https://github.com/wandersonmaracaipe/vscode-sftp
+- Marketplace do VS Code: https://marketplace.visualstudio.com/items?itemName=valuor.valuor-sftp <br>
+- Código-fonte e releases: https://github.com/wandersonmaracaipe/vscode-sftp
 
-✳ Contributions are welcome — open an issue or a pull request on the [repository](https://github.com/wandersonmaracaipe/vscode-sftp).
+✳ Contribuições são bem-vindas — abra uma _issue_ ou um _pull request_ no [repositório](https://github.com/wandersonmaracaipe/vscode-sftp).
 
-## ℹ About this fork
-This is a modernized fork of the SFTP extension: the toolchain was upgraded (TypeScript 5, ESLint, updated `@types`), dependencies were updated and **all known npm audit vulnerabilities were resolved**, and a few build/runtime bugs were fixed. The feature set and configuration remain compatible with the upstream extension.
+## Sobre este fork
+Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
+
+**Novidades desta versão (1.17.0):**
+- Biblioteca FTP abandonada (`ftp`) substituída pela moderna `basic-ftp`.
+- Correção do travamento "isDate is not a function" em versões recentes do VS Code (atualização do `ssh2`).
+- Correções de bugs do projeto de origem: "Config Not Found" ao salvar/enviar (#428), sobrescrita silenciosa ao criar arquivo (#228) e _symlinks_ para diretórios agora navegáveis (#177).
+- **Confirmação modal antes de excluir** itens remotos.
+- Comando **"SFTP: Toggle Upload On Save"** para pausar/retomar o envio automático ao salvar.
+- **Indicador de conexão** na barra de status.
+- **Barra de progresso cancelável** em transferências com vários arquivos.
 
 ---
 
-VSCode-SFTP enables you to add, edit or delete files within a local directory and have it sync to a remote server directory using different transfer protocols like FTP or SSH. The most basic setup requires only a few lines of configuration with a wide array of specific settings also available to meet the needs of any user. Both powerful and fast, it helps developers save time by allowing the use of a familiar editor and environment.
+O Valuor SFTP permite adicionar, editar ou excluir arquivos em um diretório local e sincronizá-los com um diretório de servidor remoto usando diferentes protocolos de transferência, como FTP ou SSH. A configuração mais básica exige apenas algumas linhas, e há uma ampla gama de opções específicas para atender às necessidades de qualquer usuário. Poderoso e rápido, ele ajuda desenvolvedores a economizar tempo permitindo o uso de um editor e ambiente familiares.
 
-- Features
-  - [Browser remote with Remote Explorer](#remote-explorer)
-  - Diff local and remote
-  - Sync directory
-  - Upload/Download
-  - Upload on save
-  - File Watcher
-  - Multiple configurations
-  - Switchable profiles
-  - Temp File support
-- [Commands](docs/commands.md)
-- [Debug](#debug)
-- [FAQ](#FAQ)
+- Recursos
+  - [Navegar no remoto com o Remote Explorer](#remote-explorer)
+  - _Diff_ entre local e remoto
+  - Sincronizar diretórios
+  - Enviar/Baixar (Upload/Download)
+  - Enviar ao salvar (_upload on save_)
+  - _File Watcher_
+  - Múltiplas configurações
+  - Perfis alternáveis
+  - Suporte a arquivo temporário
+  - Confirmação modal antes de excluir no remoto
+  - Barra de progresso cancelável em transferências
+  - Indicador de conexão na barra de status
+- [Comandos](docs/commands.md)
+- [Depuração](#depuração)
+- [FAQ](#faq)
 
-## Installation
+## Instalação
 
-### Method 1 (Recommended : Auto update)
-1. Select Extensions (Ctrl + Shift + X).
-2. Uninstall any other sftp extension you may have installed.
-3. Install this extension directly from VS Code Marketplace : https://marketplace.visualstudio.com/items?itemName=valuor.valuor-sftp.
-4. Voilà!
+### Método 1 (Recomendado: atualização automática)
+1. Abra as Extensões (Ctrl + Shift + X).
+2. Desinstale qualquer outra extensão sftp que você tenha instalado.
+3. Instale esta extensão diretamente pelo Marketplace do VS Code: https://marketplace.visualstudio.com/items?itemName=valuor.valuor-sftp.
+4. Pronto!
 
-### Method 2 (Manual update)
-To install just follow these steps from within VSCode:
-1. Select Extensions (Ctrl + Shift + X).
-2. Uninstall current sftp extension from @liximomo.
-3. Open "More Action" menu(ellipsis on the top) and click "Install from VSIX…".
-4. Locate VSIX file and select.
-5. Reload VSCode.
-6. Voilà!
+### Método 2 (Instalação manual via VSIX)
+Para instalar, siga estes passos dentro do VS Code:
+1. Abra as Extensões (Ctrl + Shift + X).
+2. Desinstale qualquer outra extensão sftp que você tenha instalado.
+3. Abra o menu "Mais Ações" (as reticências no topo) e clique em "Instalar do VSIX…".
+4. Localize o arquivo `.vsix` e selecione.
+5. Recarregue o VS Code.
+6. Pronto!
 
-## Documentation
-- [Home](docs/home.md)
-- [Settings](docs/setting.md)
-- [Common configuration](docs/common_configuration.md)
-- [SFTP configuration](docs/sftp_configuration.md)
-- [FTP configuration](docs/ftp_configuration.md)
-- [Commands](docs/commands.md)
+## Documentação
+- [Início](docs/home.md)
+- [Configurações (Settings)](docs/setting.md)
+- [Configuração comum](docs/common_configuration.md)
+- [Configuração SFTP](docs/sftp_configuration.md)
+- [Configuração FTP](docs/ftp_configuration.md)
+- [Comandos](docs/commands.md)
 
-## Usage
-If the latest files are already on a remote server, you can start with an empty local folder,
-then download your project, and from that point sync.
+## Uso
+Se os arquivos mais recentes já estão no servidor remoto, você pode começar com uma pasta local vazia, baixar seu projeto e, a partir daí, sincronizar.
 
-1. In `VS Code`, open a local directory you wish to sync to the remote server (or create an empty directory
-that you wish to first download the contents of a remote server folder in order to edit locally).
-2. `Ctrl+Shift+P` on Windows/Linux or `Cmd+Shift+P` on Mac open command palette, run `SFTP: config` command.
-3. A basic configuration file will appear named `sftp.json` under the `.vscode` directory, open and edit the configuration parameters with your remote server information.
+1. No `VS Code`, abra o diretório local que deseja sincronizar com o servidor remoto (ou crie um diretório vazio no qual deseja primeiro baixar o conteúdo de uma pasta remota para editar localmente).
+2. `Ctrl+Shift+P` no Windows/Linux ou `Cmd+Shift+P` no Mac para abrir a paleta de comandos e execute o comando `SFTP: Config`.
+3. Um arquivo de configuração básico chamado `sftp.json` aparecerá na pasta `.vscode`. Abra-o e edite os parâmetros com as informações do seu servidor remoto.
 
-For instance:
+Por exemplo:
 ```json
 {
-    "name": "Profile Name",
-    "host": "name_of_remote_host",
+    "name": "Nome do Perfil",
+    "host": "endereco_do_host_remoto",
     "protocol": "ftp",
     "port": 21,
     "secure": true,
-    "username": "username",
-    "remotePath": "/public_html/project", // <--- This is the path which will be downloaded if you "Download Project"
-    "password": "password",
+    "username": "usuario",
+    "remotePath": "/public_html/projeto", // <--- Este é o caminho que será baixado ao usar "Download Project"
+    "password": "senha",
     "uploadOnSave": false
 }
 ```
-The password parameter in `sftp.json` is optional, if left out you will be prompted for a password on sync.
-_Note：_ backslashes and other special characters must be escaped with a backslash.
+O parâmetro `password` no `sftp.json` é opcional; se omitido, a senha será solicitada na sincronização.
+_Observação:_ barras invertidas e outros caracteres especiais devem ser escapados com uma barra invertida.
 
-4. Save and close the `sftp.json` file.
-5. `Ctrl+Shift+P` on Windows/Linux or `Cmd+Shift+P` on Mac open command palette.
-6. Type `sftp` and you'll now see a number of other commands. You can also access many of the commands from the project's file explorer context menus.
-7. A good one to start with if you want to sync with a remote folder is `SFTP: Download Project`.  This will download the directory shown in the `remotePath` setting in `sftp.json` to your local open directory.
-8. Done - you can now edit locally and after each save it will upload to sync your remote file with the local copy.
-9. Enjoy!
+4. Salve e feche o arquivo `sftp.json`.
+5. `Ctrl+Shift+P` no Windows/Linux ou `Cmd+Shift+P` no Mac para abrir a paleta de comandos.
+6. Digite `sftp` e você verá diversos outros comandos. Muitos deles também estão disponíveis nos menus de contexto do explorador de arquivos do projeto.
+7. Um bom começo, se você quer sincronizar com uma pasta remota, é `SFTP: Download Project`. Isso baixa o diretório indicado em `remotePath` no `sftp.json` para o diretório local aberto.
+8. Pronto — agora você pode editar localmente e, a cada salvamento, o arquivo remoto será sincronizado com a cópia local.
+9. Aproveite!
 
-For detailed explanations please see the [documentation](docs/home.md).
+Para explicações detalhadas, consulte a [documentação](docs/home.md).
 
-## Example configurations
-You can see the full list of configuration options [here](docs/configuration.md).
+## Configurações de exemplo
+Você pode ver a lista completa de opções de configuração [aqui](docs/configuration.md).
 
-- [Valuor SFTP](#valuor-sftp--sftpftp-sync-for-vs-code)
-  - [Installation](#installation)
-    - [Method 1 (Recommended : Auto update)](#method-1-recommended--auto-update)
-    - [Method 2 (Manual update)](#method-2-manual-update)
-  - [Documentation](#documentation)
-  - [Usage](#usage)
-  - [Example configurations](#example-configurations)
-    - [Simple](#simple)
-    - [Profiles](#profiles)
-    - [Multiple Context](#multiple-context)
-    - [Connection Hopping](#connection-hopping)
-      - [Single Hop](#single-hop)
-      - [Multiple Hop](#multiple-hop)
-    - [Configuration in User Setting](#configuration-in-user-setting)
+- [Valuor SFTP](#valuor-sftp--sincronização-sftpftp-para-o-vs-code)
+  - [Sobre este fork](#sobre-este-fork)
+  - [Instalação](#instalação)
+  - [Documentação](#documentação)
+  - [Uso](#uso)
+  - [Configurações de exemplo](#configurações-de-exemplo)
+    - [Simples](#simples)
+    - [Perfis](#perfis)
+    - [Múltiplos contextos](#múltiplos-contextos)
+    - [Conexão via salto (hopping)](#conexão-via-salto-hopping)
+      - [Salto único](#salto-único)
+      - [Múltiplos saltos](#múltiplos-saltos)
+    - [Configuração nas User Settings](#configuração-nas-user-settings)
   - [Remote Explorer](#remote-explorer)
-    - [Multiple Select](#multiple-select)
-    - [Order](#order)
-  - [Debug](#debug)
+    - [Seleção múltipla](#seleção-múltipla)
+    - [Ordenação](#ordenação)
+  - [Depuração](#depuração)
   - [FAQ](#faq)
-  - [Credits](#credits)
+  - [Créditos](#créditos)
 
-### Simple
+### Simples
 ```json
 {
   "host": "host",
-  "username": "username",
-  "remotePath": "/remote/workspace"
+  "username": "usuario",
+  "remotePath": "/remoto/workspace"
 }
 ```
 
-### Profiles
+### Perfis
 ```json
 {
-  "username": "username",
-  "password": "password",
-  "remotePath": "/remote/workspace/a",
+  "username": "usuario",
+  "password": "senha",
+  "remotePath": "/remoto/workspace/a",
   "watcher": {
     "files": "dist/*.{js,css}",
     "autoUpload": false,
@@ -148,114 +157,114 @@ You can see the full list of configuration options [here](docs/configuration.md)
 }
 ```
 
-_Note：_ `context` and `watcher` are only available at root level.
+_Observação:_ `context` e `watcher` só estão disponíveis no nível raiz.
 
-Use `SFTP: Set Profile` to switch profile.
+Use `SFTP: Set Profile` para alternar de perfil.
 
-### Multiple Context
-The context must **not be same**.
+### Múltiplos contextos
+Os contextos **não podem ser iguais**.
 ```json
 [
   {
-    "name": "server1",
-    "context": "project/build",
+    "name": "servidor1",
+    "context": "projeto/build",
     "host": "host",
-    "username": "username",
-    "password": "password",
-    "remotePath": "/remote/project/build"
+    "username": "usuario",
+    "password": "senha",
+    "remotePath": "/remoto/projeto/build"
   },
   {
-    "name": "server2",
-    "context": "project/src",
+    "name": "servidor2",
+    "context": "projeto/src",
     "host": "host",
-    "username": "username",
-    "password": "password",
-    "remotePath": "/remote/project/src"
+    "username": "usuario",
+    "password": "senha",
+    "remotePath": "/remoto/projeto/src"
   }
 ]
 ```
 
-_Note：_ `name` is required in this mode.
+_Observação:_ `name` é obrigatório neste modo.
 
-### Connection Hopping
-You can connect to a target server through a proxy with ssh protocol.
+### Conexão via salto (hopping)
+Você pode se conectar a um servidor de destino através de um proxy usando o protocolo ssh.
 
-_Note：_ Variable substitution is not working in a hop configuration.
+_Observação:_ a substituição de variáveis não funciona em uma configuração de salto.
 
-#### Single Hop
-local -> hop -> target
+#### Salto único
+local -> salto -> destino
 ```json
 {
-  "name": "target",
-  "remotePath": "/path/in/target",
+  "name": "destino",
+  "remotePath": "/caminho/no/destino",
 
-  // hop
-  "host": "hopHost",
-  "username": "hopUsername",
-  "privateKeyPath": "/Users/localUser/.ssh/id_rsa", // <-- The key file is assumed on the local.
+  // salto
+  "host": "hostDoSalto",
+  "username": "usuarioDoSalto",
+  "privateKeyPath": "/Users/usuarioLocal/.ssh/id_rsa", // <-- A chave é assumida como estando na máquina local.
 
   "hop": {
-    // target
-    "host": "targetHost",
-    "username": "targetUsername",
-    "privateKeyPath": "/Users/hopUser/.ssh/id_rsa", // <-- The key file is assumed on the hop.
+    // destino
+    "host": "hostDestino",
+    "username": "usuarioDestino",
+    "privateKeyPath": "/Users/usuarioSalto/.ssh/id_rsa", // <-- A chave é assumida como estando no salto.
   }
 }
 ```
 
-#### Multiple Hop
-local -> hopa -> hopb -> target
+#### Múltiplos saltos
+local -> saltoA -> saltoB -> destino
 ```json
 {
-  "name": "target",
-  "remotePath": "/path/in/target",
+  "name": "destino",
+  "remotePath": "/caminho/no/destino",
 
-  // hopa
-  "host": "hopAHost",
-  "username": "hopAUsername",
-  "privateKeyPath": "/Users/hopAUsername/.ssh/id_rsa" // <-- The key file is assumed on the local.
+  // saltoA
+  "host": "hostSaltoA",
+  "username": "usuarioSaltoA",
+  "privateKeyPath": "/Users/usuarioSaltoA/.ssh/id_rsa" // <-- A chave é assumida como estando na máquina local.
 
   "hop": [
-    // hopb
+    // saltoB
     {
-      "host": "hopBHost",
-      "username": "hopBUsername",
-      "privateKeyPath": "/Users/hopaUser/.ssh/id_rsa" // <-- The key file is assumed on the hopa.
+      "host": "hostSaltoB",
+      "username": "usuarioSaltoB",
+      "privateKeyPath": "/Users/usuarioSaltoA/.ssh/id_rsa" // <-- A chave é assumida como estando no saltoA.
     },
 
-    // target
+    // destino
     {
-      "host": "targetHost",
-      "username": "targetUsername",
-      "privateKeyPath": "/Users/hopbUser/.ssh/id_rsa", // <-- The key file is assumed on the hopb.
+      "host": "hostDestino",
+      "username": "usuarioDestino",
+      "privateKeyPath": "/Users/usuarioSaltoB/.ssh/id_rsa", // <-- A chave é assumida como estando no saltoB.
     }
   ]
 }
 ```
 
-### Configuration in User Setting
-You can use `remote` to tell sftp to get the configuration from [remote-fs](https://github.com/liximomo/vscode-remote-fs).
+### Configuração nas User Settings
+Você pode usar `remote` para dizer ao sftp para obter a configuração do [remote-fs](https://github.com/liximomo/vscode-remote-fs).
 
-In User Setting:
+Nas User Settings:
 ```json
 "remotefs.remote": {
   "dev": {
     "scheme": "sftp",
     "host": "host",
-    "username": "username",
-    "rootPath": "/path/to/somewhere"
+    "username": "usuario",
+    "rootPath": "/caminho/para/algum/lugar"
   },
   "projectX": {
     "scheme": "sftp",
     "host": "host",
-    "username": "username",
+    "username": "usuario",
     "privateKeyPath": "/Users/xx/.ssh/id_rsa",
-    "rootPath": "/home/foo/some/projectx"
+    "rootPath": "/home/foo/algum/projectx"
   }
 }
 ```
 
-In sftp.json:
+No sftp.json:
 ```json
 {
   "remote": "dev",
@@ -266,41 +275,41 @@ In sftp.json:
 ```
 
 ## Remote Explorer
-![remote-explorer-preview](assets/showcase/remote-explorer.png)
+![previa-do-remote-explorer](assets/showcase/remote-explorer.png)
 
-Remote Explorer lets you explore files in remote. You can open Remote Explorer by:
+O Remote Explorer permite explorar os arquivos no remoto. Você pode abri-lo de duas formas:
 
-1. Run Command `View: Show SFTP`.
-2. Click SFTP view in Activity Bar.
+1. Execute o comando `View: Show SFTP`.
+2. Clique na visão SFTP na Barra de Atividades.
 
-You can only view a files content with Remote Explorer. Run command `SFTP: Edit in Local` to edit it in local.
+Pelo Remote Explorer você só visualiza o conteúdo de um arquivo. Execute o comando `SFTP: Edit in Local` para editá-lo localmente.
 
-### Multiple Select
-You are able to select multiple files/folders at once on the remote server to download and upload. You can do it simply by holding down Ctrl or Shift while selecting all desired files, just like on the regular explorer view.
+### Seleção múltipla
+Você pode selecionar vários arquivos/pastas de uma vez no servidor remoto para baixar e enviar. Basta segurar Ctrl ou Shift enquanto seleciona os itens desejados, como no explorador de arquivos comum.
 
-_Note：_ You need to manually refresh the parent folder after you **delete** a file if the explorer isn't correctly updated.
+_Observação:_ pode ser necessário atualizar manualmente a pasta pai depois de **excluir** um arquivo, caso o explorador não seja atualizado corretamente.
 
-### Order
-You can order the remote Explorer by adding the `remoteExplorer.order` parameter inside your `sftp.json` config file.
+### Ordenação
+Você pode ordenar o Remote Explorer adicionando o parâmetro `remoteExplorer.order` no seu arquivo `sftp.json`.
 
-In sftp.json:
+No sftp.json:
 ```json
 {
   "remoteExplorer": {
-    "order": 1 // <-- Default value is 0.
+    "order": 1 // <-- O valor padrão é 0.
   }
 }
 ```
 
-## Debug
-1. Open User Settings.
-  - On Windows/Linux - `File > Preferences > Settings`
-  - On macOS - `Code > Preferences > Settings`
-2. Set `sftp.debug` to `true` and reload vscode.
-3. View the logs in `View > Output > sftp`.
+## Depuração
+1. Abra as User Settings.
+  - No Windows/Linux — `File > Preferences > Settings`
+  - No macOS — `Code > Preferences > Settings`
+2. Defina `sftp.debug` como `true` e recarregue o VS Code.
+3. Veja os logs em `View > Output > sftp`.
 
 ## FAQ
-You can see all the Frequently Asked Questions [here](./FAQ.md).
+Você pode ver todas as Perguntas Frequentes [aqui](./FAQ.md).
 
-## Credits
-This extension builds on the work of [liximomo](https://github.com/liximomo/vscode-sftp) (original author) and [Natizyskunk](https://github.com/Natizyskunk/vscode-sftp) (long-time maintainer of the fork this is based on). Thank you for your work.
+## Créditos
+Esta extensão se apoia no trabalho de [liximomo](https://github.com/liximomo/vscode-sftp) (autor original) e [Natizyskunk](https://github.com/Natizyskunk/vscode-sftp) (mantenedor de longa data do fork em que esta se baseia). Obrigado pelo trabalho de vocês.
