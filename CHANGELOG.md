@@ -1,21 +1,23 @@
 ## 1.17.0 - 2026-07-08
-Modernization release under the **Valuor** fork (based on [Natizyskunk/vscode-sftp](https://github.com/Natizyskunk/vscode-sftp), originally by [liximomo](https://github.com/liximomo/vscode-sftp)).
+Release de modernização sob o fork da **Valuor** (baseado em [Natizyskunk/vscode-sftp](https://github.com/Natizyskunk/vscode-sftp), originalmente de [liximomo](https://github.com/liximomo/vscode-sftp)).
 
-* **Build fixes**: restored a compiling build — added the missing `COMMAND_UPLOAD_FILE/FOLDER_TO_ALL_PROFILES` imports and removed a broken `vscode-uri` usage in path resolution (`getFileSystemPath` now normalizes the string path and no longer crashes on not-yet-existing paths). Restored a green test suite.
-* **Toolchain**: TypeScript 3.9 → 5, replaced the deprecated TSLint with ESLint 9 (`typescript-eslint`), updated `@types/node` (9 → 20) and pinned `@types/vscode` to match `engines`, modernized `tsconfig` (ES2020, `skipLibCheck`, `esModuleInterop`). Added `lint` / `lint:fix` / `typecheck` scripts.
-* **Dependencies & security**: updated `ssh2` (1.13 → 1.17), `fs-extra` (10 → 11), `joi` (10 → 17), plus `webpack`, `jest`, `memfs` and others. Resolved **all** npm audit vulnerabilities (27, incl. 2 critical / 11 high → **0**). The `ssh2` bump fixes the "isDate is not a function" crash on recent VS Code builds (upstream issues #586 / #590).
-* **FTP transport**: replaced the abandoned `ftp` package with the maintained, promise-based [`basic-ftp`](https://github.com/patrickjuchli/basic-ftp) — better FTPS support and MLSD-based timestamps on modern servers, and it now bundles into `dist` (no extra shipped `node_modules`). The FileSystem behavior is preserved. On servers that don't expose modification times, sync falls back to size comparison.
-* **Bug fixes**:
-  * A redundant file-descriptor `close()` after an already-completed transfer no longer aborts the transfer.
-  * "Config Not Found" on save/upload no longer happens when VS Code reports the file path with different casing than the configured base path — the service lookup is now case-insensitive on Windows (upstream issue #428).
-  * Creating a file through the Remote Explorer now asks for confirmation before overwriting an existing remote file instead of silently truncating it (upstream issue #228).
-  * Remote symbolic links that point to directories are now navigable in the Remote Explorer over SFTP (upstream issue #177).
-* **New features**:
-  * Deleting remote items now asks for confirmation through a modal warning dialog (instead of an easy-to-miss notification), and summarizes multi-select deletes.
-  * New **"SFTP: Toggle Upload On Save"** command to pause/resume config-driven upload-on-save at runtime, without editing `sftp.json`.
-  * The SFTP status-bar item is now a connection/health indicator (a server icon when ready, an error icon when a connection fails).
-  * Multi-file uploads/downloads/syncs show a cancellable progress notification (done/total + current file). Single-file transfers stay on the status-bar spinner.
-* **Rebrand**: published as **Valuor SFTP** under the `valuor` publisher. Full credit to the original and upstream authors.
+* **Correções de build**: restaurada a compilação — adicionados os imports ausentes de `COMMAND_UPLOAD_FILE/FOLDER_TO_ALL_PROFILES` e removido um uso quebrado de `vscode-uri` na resolução de caminhos (`getFileSystemPath` agora normaliza o caminho como string e não trava mais em caminhos ainda inexistentes). Suíte de testes restabelecida.
+* **Toolchain**: TypeScript 3.9 → 5, TSLint (descontinuado) substituído por ESLint 9 (`typescript-eslint`), `@types/node` atualizado (9 → 20) e `@types/vscode` fixado para corresponder ao `engines`, `tsconfig` modernizado (ES2020, `skipLibCheck`, `esModuleInterop`). Adicionados os scripts `lint` / `lint:fix` / `typecheck`.
+* **Dependências e segurança**: atualizados `ssh2` (1.13 → 1.17), `fs-extra` (10 → 11), `joi` (10 → 17), além de `webpack`, `jest`, `memfs` e outros. Resolvidas **todas** as vulnerabilidades do npm audit (27, incluindo 2 críticas / 11 altas → **0**). A atualização do `ssh2` corrige o travamento "isDate is not a function" em versões recentes do VS Code (issues #586 / #590 do projeto de origem).
+* **Transporte FTP**: a biblioteca `ftp` (abandonada) foi substituída pela [`basic-ftp`](https://github.com/patrickjuchli/basic-ftp), mantida e baseada em promises — melhor suporte a FTPS e timestamps via MLSD em servidores modernos, e agora ela é empacotada no `dist` (sem `node_modules` extras no pacote). O comportamento do FileSystem foi preservado. Em servidores que não expõem horários de modificação, a sincronização recorre à comparação por tamanho.
+* **Correções de bugs**:
+  * Um `close()` de descritor redundante após uma transferência já concluída não aborta mais a transferência.
+  * "Config Not Found" ao salvar/enviar não acontece mais quando o VS Code informa o caminho do arquivo com diferença de maiúsculas/minúsculas em relação ao caminho base configurado — a busca de serviço agora é case-insensitive no Windows (issue #428 do projeto de origem).
+  * Criar um arquivo pelo Remote Explorer agora pede confirmação antes de sobrescrever um arquivo remoto existente, em vez de truncá-lo silenciosamente (issue #228 do projeto de origem).
+  * Links simbólicos remotos que apontam para diretórios agora são navegáveis no Remote Explorer via SFTP (issue #177 do projeto de origem).
+* **Novos recursos**:
+  * Excluir itens remotos agora pede confirmação por um diálogo modal de aviso (em vez de uma notificação fácil de ignorar), e resume exclusões de múltipla seleção.
+  * Novo comando **"SFTP: Toggle Upload On Save"** para pausar/retomar em tempo de execução o envio automático ao salvar, sem editar o `sftp.json`.
+  * O item da barra de status do SFTP agora é um indicador de conexão/saúde (ícone de servidor quando pronto, ícone de erro quando uma conexão falha).
+  * Envios/downloads/sincronizações com vários arquivos exibem uma notificação de progresso cancelável (concluídos/total + arquivo atual). Transferências de um único arquivo permanecem no _spinner_ da barra de status.
+* **Rebrand**: publicado como **Valuor SFTP** sob o publisher `valuor`. Todo o crédito aos autores originais e do projeto de origem.
+
+<!-- As entradas anteriores preservam o histórico do projeto de origem (em inglês). -->
 
 ## 1.16.3 - 2023-06-16
 * [#356] New Feature : Upload to all profiles (Pull request [#313](https://github.com/Natizyskunk/vscode-sftp/pull/313) from @wewawa vscode-sftp:create_multi_command).

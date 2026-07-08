@@ -1,11 +1,11 @@
-## SFTP configuration
+## Configuração do SFTP
 
 ### agent
-Path to ssh-agent's UNIX socket for ssh-agent-based user authentication. <br>
-Windows users must set to 'pageant' for authenticating with Pagenat or (actual) path to a Cygwin "UNIX socket". <br>
-It'd get more stability because some client/server have some sort of configured/hard coded limit.
+Caminho para o socket UNIX do ssh-agent, para autenticação de usuário baseada em ssh-agent. <br>
+Usuários do Windows devem definir como 'pageant' para autenticar com o Pageant ou informar o caminho (real) para um "socket UNIX" do Cygwin. <br>
+Isso traz mais estabilidade, pois alguns clientes/servidores possuem algum tipo de limite configurado/fixo no código.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *agent* | *string* |
 
@@ -16,9 +16,9 @@ It'd get more stability because some client/server have some sort of configured/
 ```
 
 ### privateKeyPath
-Absolute path to user private key.
+Caminho absoluto para a chave privada do usuário.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *privateKeyPath* | *string* |
 
@@ -29,10 +29,10 @@ Absolute path to user private key.
 ```
 
 ### passphrase
-For an encrypted private key, this is the passphrase string used to decrypt it. <br>
-Set to 'true' for enable passphrase dialog. This will prevent from using cleartext passphrase in this config.
+Para uma chave privada criptografada, esta é a string de passphrase usada para descriptografá-la. <br>
+Defina como 'true' para habilitar o diálogo de passphrase. Isso evita o uso da passphrase em texto puro nesta configuração.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *passphrase* | *mixed* |
 
@@ -43,14 +43,14 @@ Set to 'true' for enable passphrase dialog. This will prevent from using clearte
 ```
 
 ### interactiveAuth
-Enable keyboard interaction authentication mechanism. Set to 'true' to enable `verifyCode` dialog. <br>
-For example using Google Authentication (multi-factor). Or pass array of predefined phrases to automatically enter them without user prompting.
+Habilita o mecanismo de autenticação por interação de teclado. Defina como 'true' para habilitar o diálogo `verifyCode`. <br>
+Por exemplo, usando a Autenticação do Google (multifator). Ou passe um array de frases predefinidas para inseri-las automaticamente sem solicitar ao usuário.
 
-| 💡 Note |
+| 💡 Nota |
 | :--- |
-| *Requires the server to have keyboard-interactive authentication enabled.* | 
+| *Requer que o servidor tenha a autenticação keyboard-interactive habilitada.* | 
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *interactiveAuth* | *boolean*\|*string[]* | 'false' |
 
@@ -61,9 +61,9 @@ For example using Google Authentication (multi-factor). Or pass array of predefi
 ```
 
 ### algorithms
-Explicit overrides for the default transport layer algorithms used for the connection.
+Substituições explícitas para os algoritmos padrão da camada de transporte usados na conexão.
 
-**Default**:
+**Padrão**:
 ```json
 {
   "algorithms": {
@@ -104,9 +104,9 @@ Explicit overrides for the default transport layer algorithms used for the conne
 ```
 
 ### sshConfigPath
-Absolute path to your SSH configuration file.
+Caminho absoluto para o seu arquivo de configuração do SSH.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *sshConfigPath* | *string* | `~/.ssh/config` |
 
@@ -117,9 +117,9 @@ Absolute path to your SSH configuration file.
 ```
 
 ### sshCustomParams
-Extra parameters appended to the SSH command used by "Open SSH in Terminal".
+Parâmetros extras anexados ao comando SSH usado pelo "Open SSH in Terminal".
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *sshCustomParams* | *string* |
 

@@ -1,7 +1,7 @@
-## Common configuration
+## Configuração comum
 
 ### name
-A string to identify your configuration.
+Uma string para identificar sua configuração.
 
 | Key | Value |
 | --- | --- |
@@ -14,12 +14,12 @@ A string to identify your configuration.
 ```
 
 ### context
-A path relative to the workspace root folder. <br>
-Use this when you want to map a subfolder to the `remotePath`.
+Um caminho relativo à pasta raiz do workspace. <br>
+Use isto quando quiser mapear uma subpasta para o `remotePath`.
 
 | Key | Value | Default |
 | --- | --- | --- |
-| *context* | *string* | *The workspace root.* |
+| *context* | *string* | *A raiz do workspace.* |
 
 ```json
 {
@@ -28,11 +28,11 @@ Use this when you want to map a subfolder to the `remotePath`.
 ```
 
 ### protocol
-Protocol to be used.
+Protocolo a ser usado.
 
 | Key | Value | Default |
 | --- | --- | --- |
-| *protocol* | `sftp` *or* `ftp` | `sftp` |
+| *protocol* | `sftp` *ou* `ftp` | `sftp` |
 
 ```json
 {
@@ -41,7 +41,7 @@ Protocol to be used.
 ```
 
 ### host
-Hostname or IP address of the server.
+Nome do host ou endereço IP do servidor.
 
 | Key | Value |
 | --- | --- |
@@ -54,7 +54,7 @@ Hostname or IP address of the server.
 ```
 
 ### port
-Port number of the server.
+Número da porta do servidor.
 
 | Key | Value |
 | --- | --- |
@@ -67,7 +67,7 @@ Port number of the server.
 ```
 
 ### username
-Username for authentication.
+Nome de usuário para autenticação.
 
 | Key | Value |
 | --- | --- |
@@ -81,9 +81,9 @@ Username for authentication.
 
 ### password
 [!WARNING]
-**Passwords are stored as plain-text!**
+**As senhas são armazenadas em texto puro!**
 
-The password for password-based user authentication.
+A senha para autenticação de usuário baseada em senha.
 
 | Key | Value |
 | --- | --- |
@@ -96,7 +96,7 @@ The password for password-based user authentication.
 ```
 
 ### remotePath
-The absolute path on the remote host.
+O caminho absoluto no host remoto.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -109,7 +109,7 @@ The absolute path on the remote host.
 ```
 
 ### filePerm
-Set octal file permissions for new files.
+Define permissões octais de arquivo para novos arquivos.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -122,7 +122,7 @@ Set octal file permissions for new files.
 ```
  
 ### dirPerm
-Set octal directory permissions for new directories.
+Define permissões octais de diretório para novos diretórios.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -135,7 +135,7 @@ Set octal directory permissions for new directories.
 ```
 
 ### uploadOnSave
-Upload on every save operation of VSCode.
+Faz upload a cada operação de salvamento do VSCode.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -148,7 +148,7 @@ Upload on every save operation of VSCode.
 ```
 
 ### useTempFile
-Upload temp file on every save operation of VSCode to avoid breaking a webpage when a user accesses it while the file is still being uploaded (is incomplete).
+Faz upload de um arquivo temporário a cada operação de salvamento do VSCode para evitar quebrar uma página web quando um usuário a acessa enquanto o arquivo ainda está sendo enviado (está incompleto).
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -161,11 +161,11 @@ Upload temp file on every save operation of VSCode to avoid breaking a webpage w
 ```
 
 ### openSsh
-Enable atomic file uploads (*only supported by openSSH servers*).
+Habilita uploads atômicos de arquivo (*suportado apenas por servidores openSSH*).
 
-| 💡 Important |
+| 💡 Importante |
 | :--- |
-| *If set to* `true`*, the* `useTempFile` *option must also be set to* `true`.|
+| *Se definido como* `true`*, a opção* `useTempFile` *também deve ser definida como* `true`.|
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -179,7 +179,7 @@ Enable atomic file uploads (*only supported by openSSH servers*).
 ```
 
 ### downloadOnOpen
-Download the file from the remote server whenever it is opened.
+Baixa o arquivo do servidor remoto sempre que ele é aberto.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -192,35 +192,35 @@ Download the file from the remote server whenever it is opened.
 ```
 
 ### syncOption
-Configure the behavior of the `Sync` command.
+Configura o comportamento do comando `Sync`.
 
 | Key | Value | Default |
 | --- | --- | --- |
 | *syncOption* | *object* | `{}` |
 
 #### syncOption.delete
-Delete extraneous files from destination directories.
+Exclui arquivos supérfluos dos diretórios de destino.
 
 | Key | Value |
 | --- | --- |
 | *syncOption.delete* | *boolean* |
 
 #### syncOption.skipCreate
-Skip creating new files on the destination.
+Ignora a criação de novos arquivos no destino.
 
 | Key | Value |
 | --- | --- |
 | *syncOption.skipCreate* | *boolean* |
 
 #### syncOption.ignoreExisting
-Skip updating files that exist on the destination.
+Ignora a atualização de arquivos que existem no destino.
 
 | Key | Value |
 | --- | --- |
 | *syncOption.ignoreExisting* | *boolean* |
 
 #### syncOption.update
-Update the destination only if a newer version is on the source filesystem.
+Atualiza o destino apenas se houver uma versão mais recente no sistema de arquivos de origem.
 
 | Key | Value |
 | --- | --- |
@@ -238,8 +238,8 @@ Update the destination only if a newer version is on the source filesystem.
 ```
 
 ### ignore
-Ignore can be used to ignore files and folders from sync, and even supports wildcards using `*`. <br>
-This is the same behavior as gitignore, all paths relative to context of the current configuration.
+Ignore pode ser usado para ignorar arquivos e pastas na sincronização, e até suporta curingas usando `*`. <br>
+Este é o mesmo comportamento do gitignore, todos os caminhos relativos ao context da configuração atual.
  
 | Key | Value | Default |
 | --- | --- | --- |
@@ -260,7 +260,7 @@ This is the same behavior as gitignore, all paths relative to context of the cur
 ```
 
 ### ignoreFile
-Absolute path to the ignore file or Relative path relative to the workspace root folder.
+Caminho absoluto para o arquivo de ignore ou caminho relativo à pasta raiz do workspace.
  
 | Key | Value |
 | --- | --- |
@@ -273,32 +273,32 @@ Absolute path to the ignore file or Relative path relative to the workspace root
 ```
 
 ### watcher
-Configure the behavior of the `watcher` command.
+Configura o comportamento do comando `watcher`.
 
 | Key | Value | Default |
 | --- | --- | --- |
 | *watcher* | *object* | `{}` |
 
 #### watcher.files
-Glob patterns that are watched and when edited outside of the VSCode editor are processed.
+Padrões glob que são monitorados e, quando editados fora do editor VSCode, são processados.
 
-| 💡 Important |
+| 💡 Importante |
 | :--- |
-| *Set* `uploadOnSave` *to* `false` *when you watch everything.*| 
+| *Defina* `uploadOnSave` *como* `false` *quando você monitora tudo.*| 
 
 | Key | Value |
 | --- | --- |
 | *watcher.files* | *string* |
  
 #### watcher.autoUpload
-Upload when the file changed.
+Faz upload quando o arquivo é alterado.
 
 | Key | Value |
 | --- | --- |
 | *watcher.autoUpload* | *boolean* |
 
 #### watcher.autoDelete
-Delete when the file is removed.
+Exclui quando o arquivo é removido.
 
 | Key | Value |
 | --- | --- |
@@ -314,7 +314,7 @@ Delete when the file is removed.
 ```
 
 ### remoteTimeOffsetInHours
-The number of hours difference between the local machine and the remote server (remote minus local).
+O número de horas de diferença entre a máquina local e o servidor remoto (remoto menos local).
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -327,15 +327,15 @@ The number of hours difference between the local machine and the remote server (
 ```
 
 ### remoteExplorer
-Configure the behavior of the `remoteExplorer` command.
+Configura o comportamento do comando `remoteExplorer`.
 
 | Key | Value | Default |
 | --- | --- | --- | 
 | *remoteExplorer* | *object* | `{}` |
  
 #### remoteExplorer.filesExclude
-Configure that patterns for excluding files and folders. <br>
-The Remote Explorer decides which files and folders to show or hide based on this setting..
+Configura os padrões para excluir arquivos e pastas. <br>
+O Remote Explorer decide quais arquivos e pastas mostrar ou ocultar com base nesta configuração..
 
 | Key | Value |
 | --- | --- |
@@ -356,7 +356,7 @@ The Remote Explorer decides which files and folders to show or hide based on thi
 ```
 
 ### concurrency
-Lowering the concurrency could get more stability because some clients/servers have some sort of configured/hard coded limit.
+Reduzir a concorrência pode trazer mais estabilidade porque alguns clientes/servidores têm algum tipo de limite configurado/codificado.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -369,7 +369,7 @@ Lowering the concurrency could get more stability because some clients/servers h
 ```
 
 ### connectTimeout
-The maximum connection time.
+O tempo máximo de conexão.
 
 | Key | Value | Default |
 | --- | --- | --- |
@@ -382,12 +382,12 @@ The maximum connection time.
 ```
 
 ### limitOpenFilesOnRemote
-Limit open file descriptors to the specific number in a remote server. <br>
-Set to true for using default `limit(222)`.
+Limita os descritores de arquivo abertos ao número específico em um servidor remoto. <br>
+Defina como true para usar o `limit(222)` padrão.
 
-| 💡 Important |
+| 💡 Importante |
 | :--- |
-| *Do not set this unless you have to!* | 
+| *Não defina isto a menos que seja necessário!* | 
 
 | Key | Value | Default |
 | --- | --- | --- |

@@ -1,15 +1,15 @@
-## Setting
+## Configurações
 
-There are a handful of settings available for SFTP, and they can be changed:
+Há um punhado de configurações disponíveis para o SFTP, e elas podem ser alteradas:
 
-- On Windows/Linux: File --> Preferences --> Settings
-- On macOS: Code --> Preferences --> Settings
+- No Windows/Linux: File --> Preferences --> Settings
+- No macOS: Code --> Preferences --> Settings
 
 ### debug
-Adds debugging output to the SFTP output panel. <br>
-You can view the login in `View --> Output --> SFTP`.  Changing this requires VSCode to be reloaded.
+Adiciona saída de depuração ao painel de saída do SFTP. <br>
+Você pode visualizar o log em `View --> Output --> SFTP`. Alterar isso exige que o VSCode seja recarregado.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *debug* | *boolean* | *false* |
 
@@ -20,9 +20,9 @@ You can view the login in `View --> Output --> SFTP`.  Changing this requires VS
 ```
 
 ### downloadWhenOpenInRemoteExplorer
-Change the default behavior from `View Content` to `Edit in Local` when opening files in the Remote Explorer.
+Altera o comportamento padrão de `View Content` para `Edit in Local` ao abrir arquivos no Remote Explorer.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *debug* | *boolean* | *false* |
 

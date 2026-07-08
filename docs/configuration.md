@@ -1,13 +1,13 @@
 # VSCode-SFTP
 
-Configurations are stored in your project working directory under `../.vscode/sftp.json`. <br>
-The configuration file can always be accessed with `CTRL` + `Shift` + `P`, and searching for `SFTP: Config`.
+As configurações são armazenadas no diretório de trabalho do seu projeto em `../.vscode/sftp.json`. <br>
+O arquivo de configuração pode ser acessado a qualquer momento com `CTRL` + `Shift` + `P` e pesquisando por `SFTP: Config`.
 
 ![image](https://github.com/user-attachments/assets/5ceff350-7678-4264-98d4-2741a98a9dbe)
 
-## Table of Contents
+## Índice
 
-### Configuration
+### Configuração
 - [name](#name)
 - [context](#context)
 - [protocol](#protocol)
@@ -32,7 +32,7 @@ The configuration file can always be accessed with `CTRL` + `Shift` + `P`, and s
 - [connectTimeout](#connecttimeout)
 - [limitOpenFilesOnRemote](#limitopenfilesonremote)
 
-### SFTP only configuration
+### Configuração exclusiva de SFTP
 - [agent](#agent)
 - [privateKeyPath](#privatekeypath)
 - [passphrase](#passphrase)
@@ -41,18 +41,18 @@ The configuration file can always be accessed with `CTRL` + `Shift` + `P`, and s
 - [sshConfigPath](#sshconfigpath)
 - [sshCustomParams](#sshcustomparams)
 
-### FTP(s) only configuration
+### Configuração exclusiva de FTP(s)
 - [secure](#secure)
 - [secureOptions](#secureoptions)
 
 
 
-## Configuration
+## Configuração
 
 ### name
-A string to identify your configuration.
+Uma string para identificar sua configuração.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *name* | *string* |
 
@@ -63,12 +63,12 @@ A string to identify your configuration.
 ```
 
 ### context
-A path relative to the workspace root folder. <br>
-Use this when you want to map a subfolder to the `remotePath`.
+Um caminho relativo à pasta raiz do workspace. <br>
+Use isto quando quiser mapear uma subpasta para o `remotePath`.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
-| *context* | *string* | *The workspace root.* |
+| *context* | *string* | *A raiz do workspace.* |
 
 ```json
 {
@@ -77,11 +77,11 @@ Use this when you want to map a subfolder to the `remotePath`.
 ```
 
 ### protocol
-Protocol to be used.
+Protocolo a ser utilizado.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
-| *protocol* | `sftp` *or* `ftp` | `sftp` |
+| *protocol* | `sftp` *ou* `ftp` | `sftp` |
 
 ```json
 {
@@ -90,9 +90,9 @@ Protocol to be used.
 ```
 
 ### host
-Hostname or IP address of the server.
+Nome do host ou endereço IP do servidor.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *host* | *string* |
 
@@ -103,9 +103,9 @@ Hostname or IP address of the server.
 ```
 
 ### port
-Port number of the server.
+Número da porta do servidor.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *port* | *integer* |
 
@@ -116,9 +116,9 @@ Port number of the server.
 ```
 
 ### username
-Username for authentication.
+Nome de usuário para autenticação.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *username* | *string* |
 
@@ -130,11 +130,11 @@ Username for authentication.
 
 ### password
 [!WARNING]
-**Passwords are stored as plain-text!**
+**As senhas são armazenadas em texto puro!**
 
-The password for password-based user authentication.
+A senha para autenticação de usuário baseada em senha.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *password* | *string* |
 
@@ -145,9 +145,9 @@ The password for password-based user authentication.
 ```
 
 ### remotePath
-The absolute path on the remote host.
+O caminho absoluto no host remoto.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *remotePath* | *string* | `/` |
 
@@ -158,9 +158,9 @@ The absolute path on the remote host.
 ```
 
 ### filePerm
-Set octal file permissions for new files.
+Define permissões octais de arquivo para novos arquivos.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *filePerm* | *number* | `false` |
 
@@ -171,9 +171,9 @@ Set octal file permissions for new files.
 ```
  
 ### dirPerm
-Set octal directory permissions for new directories.
+Define permissões octais de diretório para novos diretórios.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *dirPerm* | *number* | `false` |
 
@@ -184,9 +184,9 @@ Set octal directory permissions for new directories.
 ```
 
 ### uploadOnSave
-Upload on every save operation of VSCode.
+Faz upload a cada operação de salvamento do VSCode.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *uploadOnSave* | *boolean* | `false` |
 
@@ -197,9 +197,9 @@ Upload on every save operation of VSCode.
 ```
 
 ### useTempFile
-Upload temp file on every save operation of VSCode to avoid breaking a webpage when a user accesses it while the file is still being uploaded (is incomplete).
+Faz upload de um arquivo temporário a cada operação de salvamento do VSCode para evitar quebrar uma página web quando um usuário a acessa enquanto o arquivo ainda está sendo enviado (está incompleto).
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *useTempFile* | *boolean* | `false` |
 
@@ -210,13 +210,13 @@ Upload temp file on every save operation of VSCode to avoid breaking a webpage w
 ```
 
 ### openSsh
-Enable atomic file uploads (*only supported by openSSH servers*).
+Habilita uploads atômicos de arquivos (*suportado apenas por servidores openSSH*).
 
-| 💡 Important |
+| 💡 Importante |
 | :--- |
-| *If set to* `true`*, the* `useTempFile` *option must also be set to* `true`.|
+| *Se definido como* `true`*, a opção* `useTempFile` *também deve ser definida como* `true`.|
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *openSsh* | *boolean* | `false` |
 
@@ -228,9 +228,9 @@ Enable atomic file uploads (*only supported by openSSH servers*).
 ```
 
 ### downloadOnOpen
-Download the file from the remote server whenever it is opened.
+Baixa o arquivo do servidor remoto sempre que ele é aberto.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *downloadOnOpen* | *boolean* | `false` |
 
@@ -241,37 +241,37 @@ Download the file from the remote server whenever it is opened.
 ```
 
 ### syncOption
-Configure the behavior of the `Sync` command.
+Configura o comportamento do comando `Sync`.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *syncOption* | *object* | `{}` |
 
 #### syncOption.delete
-Delete extraneous files from destination directories.
+Exclui arquivos supérfluos dos diretórios de destino.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *syncOption.delete* | *boolean* |
 
 #### syncOption.skipCreate
-Skip creating new files on the destination.
+Ignora a criação de novos arquivos no destino.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *syncOption.skipCreate* | *boolean* |
 
 #### syncOption.ignoreExisting
-Skip updating files that exist on the destination.
+Ignora a atualização de arquivos que já existem no destino.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *syncOption.ignoreExisting* | *boolean* |
 
 #### syncOption.update
-Update the destination only if a newer version is on the source filesystem.
+Atualiza o destino apenas se houver uma versão mais recente no sistema de arquivos de origem.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *syncOption.update* | *boolean* |
 
@@ -287,9 +287,9 @@ Update the destination only if a newer version is on the source filesystem.
 ```
 
 ### useTempFile
-Upload temp file on every save operation of VSCode to avoid breaking a webpage when a user accesses it while the file is still being uploaded (is incomplete).
+Faz upload de um arquivo temporário a cada operação de salvamento do VSCode para evitar quebrar uma página web quando um usuário a acessa enquanto o arquivo ainda está sendo enviado (está incompleto).
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *useTempFile* | *boolean* | `false` |
 
@@ -300,10 +300,10 @@ Upload temp file on every save operation of VSCode to avoid breaking a webpage w
 ```
 
 ### ignore
-Ignore can be used to ignore files and folders from sync, and even supports wildcards using `*`. <br>
-This is the same behavior as gitignore, all paths relative to context of the current configuration.
+O ignore pode ser usado para ignorar arquivos e pastas na sincronização e ainda suporta curingas usando `*`. <br>
+Este é o mesmo comportamento do gitignore, com todos os caminhos relativos ao context da configuração atual.
  
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *ignore* | *string[]* | `[]` |
  
@@ -322,9 +322,9 @@ This is the same behavior as gitignore, all paths relative to context of the cur
 ```
 
 ### ignoreFile
-Absolute path to the ignore file or Relative path relative to the workspace root folder.
+Caminho absoluto para o arquivo de ignore ou caminho relativo à pasta raiz do workspace.
  
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *ignoreFile* | *string* |
  
@@ -335,34 +335,34 @@ Absolute path to the ignore file or Relative path relative to the workspace root
 ```
 
 ### watcher
-Configure the behavior of the `watcher` command.
+Configura o comportamento do comando `watcher`.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *watcher* | *object* | `{}` |
 
 #### watcher.files
-Glob patterns that are watched and when edited outside of the VSCode editor are processed.
+Padrões glob que são monitorados e, quando editados fora do editor do VSCode, são processados.
 
-| 💡 Important |
+| 💡 Importante |
 | :--- |
-| *Set* `uploadOnSave` *to* `false` *when you watch everything.*| 
+| *Defina* `uploadOnSave` *como* `false` *quando você monitora tudo.*| 
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *watcher.files* | *string* |
  
 #### watcher.autoUpload
-Upload when the file changed.
+Faz upload quando o arquivo é alterado.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *watcher.autoUpload* | *boolean* |
 
 #### watcher.autoDelete
-Delete when the file is removed.
+Exclui quando o arquivo é removido.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *watcher.autoDelete* | *boolean* |
 ```json
@@ -376,9 +376,9 @@ Delete when the file is removed.
 ```
 
 ### remoteTimeOffsetInHours
-The number of hours difference between the local machine and the remote server (remote minus local).
+O número de horas de diferença entre a máquina local e o servidor remoto (remoto menos local).
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *remoteTimeOffsetInHours* | *number* | `0` |
 
@@ -389,23 +389,23 @@ The number of hours difference between the local machine and the remote server (
 ```
 
 ### remoteExplorer
-Configure the behavior of the `remoteExplorer` command.
+Configura o comportamento do comando `remoteExplorer`.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- | 
 | *remoteExplorer* | *object* | `{}` |
  
 #### remoteExplorer.filesExclude
-Configure that patterns for excluding files and folders. <br>
-The Remote Explorer decides which files and folders to show or hide based on this setting..
+Configura os padrões para excluir arquivos e pastas. <br>
+O Remote Explorer decide quais arquivos e pastas mostrar ou ocultar com base nesta configuração..
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *remoteExplorer.filesExclude* | *string[]* |
 
 #### remoteExplorer.order
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *remoteExplorer.order* | *number* |
 ```json
@@ -418,9 +418,9 @@ The Remote Explorer decides which files and folders to show or hide based on thi
 ```
 
 ### concurrency
-Lowering the concurrency could get more stability because some clients/servers have some sort of configured/hard coded limit.
+Reduzir a concorrência pode proporcionar mais estabilidade, pois alguns clientes/servidores têm algum tipo de limite configurado/codificado.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *concurrency* | *number* | `4` |
 
@@ -431,9 +431,9 @@ Lowering the concurrency could get more stability because some clients/servers h
 ```
 
 ### connectTimeout
-The maximum connection time.
+O tempo máximo de conexão.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *connectTimeout* | *number* | `10000` |
 
@@ -444,14 +444,14 @@ The maximum connection time.
 ```
 
 ### limitOpenFilesOnRemote
-Limit open file descriptors to the specific number in a remote server. <br>
-Set to true for using default `limit(222)`.
+Limita os descritores de arquivo abertos a um número específico em um servidor remoto. <br>
+Defina como true para usar o `limit(222)` padrão.
 
-| 💡 Important |
+| 💡 Importante |
 | :--- |
-| *Do not set this unless you have to!* | 
+| *Não defina isto a menos que seja necessário!* | 
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *limitOpenFilesOnRemote* | *mixed* | `false` |
 
@@ -462,14 +462,14 @@ Set to true for using default `limit(222)`.
 ```
 
 
-## SFTP only configuration
+## Configuração exclusiva de SFTP
 
 ### agent
-Path to ssh-agent's UNIX socket for ssh-agent-based user authentication. <br>
-Windows users must set to 'pageant' for authenticating with Pagenat or (actual) path to a Cygwin "UNIX socket". <br>
-It'd get more stability because some client/server have some sort of configured/hard coded limit.
+Caminho para o socket UNIX do ssh-agent para autenticação de usuário baseada em ssh-agent. <br>
+Usuários do Windows devem definir como 'pageant' para autenticar com o Pageant ou o caminho (real) para um "UNIX socket" do Cygwin. <br>
+Isso proporcionaria mais estabilidade, pois alguns clientes/servidores têm algum tipo de limite configurado/codificado.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *agent* | *string* |
 
@@ -480,9 +480,9 @@ It'd get more stability because some client/server have some sort of configured/
 ```
 
 ### privateKeyPath
-Absolute path to user private key.
+Caminho absoluto para a chave privada do usuário.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *privateKeyPath* | *string* |
 
@@ -493,10 +493,10 @@ Absolute path to user private key.
 ```
 
 ### passphrase
-For an encrypted private key, this is the passphrase string used to decrypt it. <br>
-Set to 'true' for enable passphrase dialog. This will prevent from using cleartext passphrase in this config.
+Para uma chave privada criptografada, esta é a string de passphrase usada para descriptografá-la. <br>
+Defina como 'true' para habilitar o diálogo de passphrase. Isso evitará o uso de passphrase em texto puro nesta configuração.
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *passphrase* | *mixed* |
 
@@ -507,14 +507,14 @@ Set to 'true' for enable passphrase dialog. This will prevent from using clearte
 ```
 
 ### interactiveAuth
-Enable keyboard interaction authentication mechanism. Set to 'true' to enable `verifyCode` dialog. <br>
-For example using Google Authentication (multi-factor). Or pass array of predefined phrases to automatically enter them without user prompting.
+Habilita o mecanismo de autenticação por interação de teclado. Defina como 'true' para habilitar o diálogo `verifyCode`. <br>
+Por exemplo, usando a Autenticação do Google (multifator). Ou passe um array de frases predefinidas para inseri-las automaticamente sem solicitar ao usuário.
 
-| 💡 Note |
+| 💡 Nota |
 | :--- |
-| *Requires the server to have keyboard-interactive authentication enabled.* | 
+| *Requer que o servidor tenha a autenticação keyboard-interactive habilitada.* | 
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *interactiveAuth* | *boolean*\|*string[]* | 'false' |
 
@@ -525,9 +525,9 @@ For example using Google Authentication (multi-factor). Or pass array of predefi
 ```
 
 ### algorithms
-Explicit overrides for the default transport layer algorithms used for the connection.
+Substituições explícitas para os algoritmos padrão da camada de transporte usados na conexão.
 
-**Default**:
+**Padrão**:
 ```json
 {
   "algorithms": {
@@ -568,9 +568,9 @@ Explicit overrides for the default transport layer algorithms used for the conne
 ```
 
 ### sshConfigPath
-Absolute path to your SSH configuration file.
+Caminho absoluto para o seu arquivo de configuração SSH.
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *sshConfigPath* | *string* | `~/.ssh/config` |
 
@@ -581,9 +581,9 @@ Absolute path to your SSH configuration file.
 ```
 
 ### sshCustomParams
-Extra parameters appended to the SSH command used by "Open SSH in Terminal".
+Parâmetros extras anexados ao comando SSH usado por "Open SSH in Terminal".
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *sshCustomParams* | *string* |
 
@@ -594,13 +594,13 @@ Extra parameters appended to the SSH command used by "Open SSH in Terminal".
 ```
 
 
-## FTP(s) only configuration
+## Configuração exclusiva de FTP(s)
 
 ### secure
-Set to true for both control and data connection encryption. <br>
-Set to `control` for control encryption only, or `implicit` for implicitly encrypted control connection (this mode is deprecated in modern times, but usually uses port 990).
+Defina como true para criptografia tanto da conexão de controle quanto da de dados. <br>
+Defina como `control` para criptografar apenas o controle, ou `implicit` para uma conexão de controle criptografada implicitamente (este modo está obsoleto atualmente, mas geralmente usa a porta 990).
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *secure* | *mixed* | `false` |
 
@@ -611,13 +611,13 @@ Set to `control` for control encryption only, or `implicit` for implicitly encry
 ```
 
 ### secureOptions
-Additional options to be passed to `tls.connect()`.
+Opções adicionais a serem passadas para `tls.connect()`.
 
-| 💡 Note |
+| 💡 Nota |
 | :--- |
-| *See [TLS connect options callback](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).* | 
+| *Veja [TLS connect options callback](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).* | 
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *secureOptions* | *object* |
 

@@ -1,36 +1,36 @@
-- [Error: Failure](#error-failure)
-	- [Error: Failure - Solution One](#error-failure---solution-one)
-	- [Error: Failure - Solution Two](#error-failure---solution-two)
-- [Error: Connection closed](#error-connection-closed)
-- [Error: Clicking Upload Changed Files does not work](#error-clicking-upload-changed-files-does-not-work)
+- [Erro: Failure](#erro-failure)
+	- [Erro: Failure - Solução Um](#erro-failure---solução-um)
+	- [Erro: Failure - Solução Dois](#erro-failure---solução-dois)
+- [Erro: Conexão fechada](#erro-conexão-fechada)
+- [Erro: Clicar em "Upload Changed Files" não funciona](#erro-clicar-em-upload-changed-files-não-funciona)
 - [ENFILE: file table overflow ...](#enfile-file-table-overflow-)
-	- [ENFILE: file table overflow ... - Solution for MacOS harsh limit](#enfile-file-table-overflow----solution-for-macos-harsh-limit)
-- [How do I upload content inside a folder, but not the folder itself?](#how-do-i-upload-content-inside-a-folder-but-not-the-folder-itself)
-- [How can I upload files as root?](#how-can-i-upload-files-as-root)
-- [Automatically sync both ways without user interaction](#automatically-sync-both-ways-without-user-interaction)
-- [Show dotfiles/hidden files in remote explorer](#show-dotfileshidden-files-in-remote-explorer)
+	- [ENFILE: file table overflow ... - Solução para o limite rígido do MacOS](#enfile-file-table-overflow----solução-para-o-limite-rígido-do-macos)
+- [Como faço upload do conteúdo de dentro de uma pasta, mas não da pasta em si?](#como-faço-upload-do-conteúdo-de-dentro-de-uma-pasta-mas-não-da-pasta-em-si)
+- [Como posso enviar arquivos como root?](#como-posso-enviar-arquivos-como-root)
+- [Sincronizar automaticamente nos dois sentidos sem interação do usuário](#sincronizar-automaticamente-nos-dois-sentidos-sem-interação-do-usuário)
+- [Exibir dotfiles/arquivos ocultos no remote explorer](#exibir-dotfilesarquivos-ocultos-no-remote-explorer)
 
-## Error: Failure
+## Erro: Failure
 
-The failure error message comes from the remote side and is more or less the default/generic error 
-message that sftp server sends when a syscall fails or something similar happens.
-To know what exactly is going wrong you could try to enable debug output for the sftp server 
-and then execute your transfers again and see what (if anything) shows up in the logs there.
+A mensagem de erro "failure" vem do lado remoto e é mais ou menos a mensagem de erro padrão/genérica 
+que o servidor sftp envia quando uma syscall falha ou algo semelhante acontece.
+Para saber exatamente o que está dando errado, você pode tentar habilitar a saída de depuração do servidor sftp 
+e então executar suas transferências novamente e ver o que (se houver algo) aparece nos logs de lá.
 
-### Error: Failure - Solution One
+### Erro: Failure - Solução Um
 
-Change `remotePath` to the actual path if it's a symlink.
+Altere `remotePath` para o caminho real se ele for um symlink.
 
-### Error: Failure - Solution Two
+### Erro: Failure - Solução Dois
 
-The problem could be that your server runs out of file descriptors.
-You should try to increase the file descriptors limit.
-If you don't have the permission to do this, set [limitOpenFilesOnRemote](docs/configuration.md#limitopenfilesonremote) option in your config.
+O problema pode ser que o seu servidor esteja ficando sem file descriptors.
+Você deve tentar aumentar o limite de file descriptors.
+Se você não tiver permissão para fazer isso, defina a opção [limitOpenFilesOnRemote](docs/configuration.md#limitopenfilesonremote) na sua configuração.
 
-## Error: Connection closed
+## Erro: Conexão fechada
 
-The problem could be that the SFTP extension keeps closing the connection for those who use more legacy/old systems.
-You'll have to Explicitly override the default transport layer algorithms used for the connection to remove the new `"diffie-hellman-group-exchange-sha256"` algorithm that cause the problem from the `kex` section. Just add this in your `sftp.json` configuration file, which should make it work.
+O problema pode ser que a extensão SFTP fique fechando a conexão para quem usa sistemas mais legados/antigos.
+Você terá que substituir explicitamente os algoritmos padrão da camada de transporte usados na conexão para remover o novo algoritmo `"diffie-hellman-group-exchange-sha256"`, que causa o problema, da seção `kex`. Basta adicionar isto no seu arquivo de configuração `sftp.json`, o que deve fazer funcionar.
 ```json
 {
 	"algorithms": {
@@ -69,22 +69,22 @@ You'll have to Explicitly override the default transport layer algorithms used f
 }
 ```
 
-## Error: Clicking Upload Changed Files does not work
+## Erro: Clicar em "Upload Changed Files" não funciona
 
-See [vscode-sftp issue #854](https://github.com/liximomo/vscode-sftp/issues/854).
+Veja [vscode-sftp issue #854](https://github.com/liximomo/vscode-sftp/issues/854).
 
-**@PaPa31** added a fix to make the 'Upload Changed Files' command visible and added a default keyboard shortcut to call it.
-<!-- **danieleiobbi** has a workaround to create a keyboard shortcut. -->
+**@PaPa31** adicionou uma correção para tornar o comando 'Upload Changed Files' visível e adicionou um atalho de teclado padrão para acioná-lo.
+<!-- **danieleiobbi** tem uma solução alternativa para criar um atalho de teclado. -->
 
-![upload changed files keyboard shortcut](assets/faq/upload_changed_files_shortcut.png)
+![atalho de teclado para upload changed files](assets/faq/upload_changed_files_shortcut.png)
 
 ## ENFILE: file table overflow ...
 
-MacOS have a harsh limit on number of open files.
+O MacOS tem um limite rígido no número de arquivos abertos.
 
-### ENFILE: file table overflow ... - Solution for MacOS harsh limit
+### ENFILE: file table overflow ... - Solução para o limite rígido do MacOS
 
-Run those command:
+Execute estes comandos:
 ```sh
 echo kern.maxfiles=65536 | sudo tee -a /etc/sysctl.conf
 echo kern.maxfilesperproc=65536 | sudo tee -a /etc/sysctl.conf
@@ -93,14 +93,14 @@ sudo sysctl -w kern.maxfilesperproc=65536
 ulimit -n 65536
 ```
 
-## How do I upload content inside a folder, but not the folder itself?
+## Como faço upload do conteúdo de dentro de uma pasta, mas não da pasta em si?
 
-See [vscode-sftp issue #852](https://github.com/liximomo/vscode-sftp/issues/852).
+Veja [vscode-sftp issue #852](https://github.com/liximomo/vscode-sftp/issues/852).
 
-As quoted from **raoul2000**, "as long as you set the `context` property to `./[path]` (e.g., `./build`), it
-will work."
+Como citado por **raoul2000**, "desde que você defina a propriedade `context` como `./[path]` (por exemplo, `./build`), 
+vai funcionar."
 
-Example configuration (where all JS and HTML files in `./build` will be copied to `/folder1/folder2/folder3`):
+Exemplo de configuração (onde todos os arquivos JS e HTML em `./build` serão copiados para `/folder1/folder2/folder3`):
 ```json
 {
   "name": "My Server",
@@ -119,21 +119,21 @@ Example configuration (where all JS and HTML files in `./build` will be copied t
 }
 ```
 
-## How can I upload files as root?
+## Como posso enviar arquivos como root?
 
-See [vscode-sftp issue #559](https://github.com/liximomo/vscode-sftp/issues/559).
+Veja [vscode-sftp issue #559](https://github.com/liximomo/vscode-sftp/issues/559).
 
-**Yevhen-development** has a workaround, but it may not work for everyone.  In `sftp.json`, set the
-following:
+**Yevhen-development** tem uma solução alternativa, mas ela pode não funcionar para todos. No `sftp.json`, defina o
+seguinte:
 ```json
 "sshCustomParams": "sudo su -;"
 ```
 
-## Automatically sync both ways without user interaction
+## Sincronizar automaticamente nos dois sentidos sem interação do usuário
 
-See [vscode-sftp issue #136](https://github.com/Natizyskunk/vscode-sftp/issues/136).
+Veja [vscode-sftp issue #136](https://github.com/Natizyskunk/vscode-sftp/issues/136).
 
-> *This can also be used with **GIT** this way when you're checking out a branch or reverting changes/commits, your server will also be updated.*
+> *Isto também pode ser usado com o **GIT** desta forma: quando você faz checkout de um branch ou reverte alterações/commits, o seu servidor também será atualizado.*
 
 ```json
 {
@@ -143,33 +143,33 @@ See [vscode-sftp issue #136](https://github.com/Natizyskunk/vscode-sftp/issues/1
   "port": 22,
   "username": "user1",
   "remotePath": "/folder1/folder2/folder3",
-  "uploadOnSave": false, // Set to false if watcher `autoUpload` is set to true & `files` is set to "**/*".
+  "uploadOnSave": false, // Defina como false se o `autoUpload` do watcher estiver como true e `files` estiver como "**/*".
   "watcher": {
     "files": "**/*",
     "autoUpload": true,
     "autoDelete": true
   }
   "syncOption": {
-    "delete": true // Delete extraneous files from destination directories.
+    "delete": true // Exclui arquivos supérfluos dos diretórios de destino.
   },
 }
 ```
 
-## Show dotfiles/hidden files in remote explorer
+## Exibir dotfiles/arquivos ocultos no remote explorer
 
-### If using proftpd
+### Se estiver usando proftpd
 
-Please edit the config file `proftpd.conf`. Depending on your installation, the default location for this file can be one of those :
+Edite o arquivo de configuração `proftpd.conf`. Dependendo da sua instalação, a localização padrão deste arquivo pode ser uma destas:
 - `/etc/proftpd.conf`
 - `/etc/proftpd/proftpd.conf`
 - `/usr/local/etc/proftpd.conf`
 - `/usr/local/etc/proftpd/proftpd.conf`
 
-Search for the `ListOptions` parameter and change it from `"-l"` to `"-la"`.
+Procure pelo parâmetro `ListOptions` e altere-o de `"-l"` para `"-la"`.
 
-It should look like this : 
+Deve ficar assim: 
 ```conf
-#Global settings
+#Configurações globais
 <Global>
 [...]
 ListOptions 		"-la"

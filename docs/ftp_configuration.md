@@ -1,10 +1,10 @@
-## FTP(s) configuration
+## Configuração FTP(s)
 
 ### secure
-Set to true for both control and data connection encryption. <br>
-Set to `control` for control encryption only, or `implicit` for implicitly encrypted control connection (this mode is deprecated in modern times, but usually uses port 990).
+Defina como true para criptografar tanto a conexão de controle quanto a de dados. <br>
+Defina como `control` para criptografar apenas a conexão de controle, ou `implicit` para uma conexão de controle criptografada implicitamente (este modo está obsoleto atualmente, mas geralmente usa a porta 990).
 
-| Key | Value | Default |
+| Chave | Valor | Padrão |
 | --- | --- | --- |
 | *secure* | *mixed* | `false` |
 
@@ -15,13 +15,13 @@ Set to `control` for control encryption only, or `implicit` for implicitly encry
 ```
 
 ### secureOptions
-Additional options to be passed to `tls.connect()`.
+Opções adicionais a serem passadas para `tls.connect()`.
 
-| 💡 Note |
+| 💡 Nota |
 | :--- |
-| *See [TLS connect options callback](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).* | 
+| *Consulte [TLS connect options callback](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback).* | 
 
-| Key | Value |
+| Chave | Valor |
 | --- | --- |
 | *secureOptions* | *object* |
 

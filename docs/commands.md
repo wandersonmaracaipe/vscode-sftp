@@ -1,71 +1,71 @@
-## Common commands
+## Comandos comuns
 
 ### SFTP: Config
-Create a new configuration file for a project.
+Cria um novo arquivo de configuração para um projeto.
 
 ### SFTP: Set Profile
-Set the current profile.
+Define o perfil atual.
            
-#### KeyBindings Args
+#### Argumentos de KeyBindings
 func(profileName: string)
 
 ### SFTP: Upload Active File
-Upload the current file.
+Envia o arquivo atual.
 
 ### SFTP: Upload Changed Files
-Upload all files changed or created since the last commit to your Git.
-Can be called by default keyboard shortcut `Ctrl+Alt+U`.
+Envia todos os arquivos alterados ou criados desde o último commit no seu Git.
+Pode ser chamado pelo atalho de teclado padrão `Ctrl+Alt+U`.
 
 ### SFTP: Upload Active Folder
-Upload the entire folder the current file is located in.
+Envia a pasta inteira em que o arquivo atual está localizado.
 
 ### SFTP: Download Active File
-Download the remote version of the current file and overwrite the local copy.
+Baixa a versão remota do arquivo atual e sobrescreve a cópia local.
 
 ### SFTP: Download Active Folder
-Download the entire folder the current file is located in.
+Baixa a pasta inteira em que o arquivo atual está localizado.
 
 ### SFTP: Sync Local -> Remote
-1. Any files that exist on both local and remote that have a different timestamp between local and remote are copied over.
-2. Any files that only exist on the local are copied over.
+1. Qualquer arquivo que exista tanto no local quanto no remoto e que tenha um timestamp diferente entre local e remoto é copiado.
+2. Qualquer arquivo que exista apenas no local é copiado.
 
-You can change the default behavior by [syncOption](configuration.md#syncoption).
+Você pode alterar o comportamento padrão com [syncOption](configuration.md#syncoption).
 
 ### SFTP: Sync Remote -> Local
-Same as `Sync Local -> Remote`, but in the opposite direction.
+Igual a `Sync Local -> Remote`, mas na direção oposta.
 
 ### SFTP: Sync Both Directions
-Compare file modification times, and will always perform the action that causes the newest file to be present in both locations.
+Compara os horários de modificação dos arquivos e sempre executa a ação que faz com que o arquivo mais recente esteja presente em ambos os locais.
 
-*Only [skipCreate](configuration.md#syncoptionskipcreate) and [ignoreExisting](configuration.md#syncoptionignoreexisting) are valid for this command.*
+*Apenas [skipCreate](configuration.md#syncoptionskipcreate) e [ignoreExisting](configuration.md#syncoptionignoreexisting) são válidos para este comando.*
 
 ### SFTP: List Active Folder
-List the folder the current file is located in.
+Lista a pasta em que o arquivo atual está localizado.
 
 ### sftp.upload
-Upload file or folders.
+Envia arquivo ou pastas.
 
-#### KeyBindings Args
+#### Argumentos de KeyBindings
 func(fspaths: string[])
 
 ### sftp.download
-Download file or folders.
+Baixa arquivo ou pastas.
 
-#### KeyBindings Args
+#### Argumentos de KeyBindings
 func(fspaths: string[])
 
 ### SFTP: Cancel All Transfers
-Stop the current transfers (upload and download).
+Interrompe as transferências atuais (upload e download).
 
 ### SFTP: Open SSH in Terminal
-Open a terminal in VSCode and auto login to a specific server.
+Abre um terminal no VSCode e faz login automático em um servidor específico.
 
 
-## Alt commands
-An alternative command can be found when pressing `Alt` while opening a menu.
+## Comandos Alt
+Um comando alternativo pode ser encontrado ao pressionar `Alt` enquanto abre um menu.
 
 ### Force Download
-Download file but disregard ignore rules.
+Baixa o arquivo, mas desconsidera as regras de ignore.
 
 ### Force Upload
-Upload file but disregard ignore rules.
+Envia o arquivo, mas desconsidera as regras de ignore.
