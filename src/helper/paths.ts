@@ -1,24 +1,30 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import { URI } from 'vscode-uri';
 import { upath } from '../core';
 import { pathRelativeToWorkspace, getWorkspaceFolders } from '../host';
 
-// from https://github.com/microsoft/vscode-eslint/blob/d97a8b5e99ad30d2ce32ffa5646447202f873413/server/src/eslintServer.ts#L816
-function getFileSystemPath(uri: URI): string {
-	let result = uri.fsPath;
+// Normalize a filesystem path so that only-casing differences (mostly the
+// Windows drive letter) don't break path comparisons.
+// Adapted from https://github.com/microsoft/vscode-eslint/blob/d97a8b5e99ad30d2ce32ffa5646447202f873413/server/src/eslintServer.ts#L816
+function getFileSystemPath(fsPath: string): string {
+	let result = fsPath;
 	if (process.platform === 'win32' && result.length >= 2 && result[1] === ':') {
-		// Node by default uses an upper case drive letter and ESLint uses
-		// === to compare paths which results in the equal check failing
-		// if the drive letter is lower case in th URI. Ensure upper case.
+		// Node by default uses an upper case drive letter. Normalizing to upper
+		// case keeps `path.relative` from producing wrong results when the two
+		// paths only differ by the drive letter casing.
 		result = result[0].toUpperCase() + result.substr(1);
 	}
 	if (process.platform === 'win32' || process.platform === 'darwin') {
-		const realpath = fs.realpathSync.native(result);
-		// Only use the real path if only the casing has changed.
-		if (realpath.toLowerCase() === result.toLowerCase()) {
-			result = realpath;
+		try {
+			const realpath = fs.realpathSync.native(result);
+			// Only use the real path if only the casing has changed.
+			if (realpath.toLowerCase() === result.toLowerCase()) {
+				result = realpath;
+			}
+		} catch {
+			// The path may not exist yet (e.g. a file about to be created);
+			// fall back to the normalized input in that case.
 		}
 	}
 	return result;
