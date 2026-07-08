@@ -94,6 +94,11 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.toggleUploadOnSave",
+        "title": "Toggle Upload On Save",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.upload.file",
         "title": "Upload File",
         "category": "SFTP"
@@ -305,6 +310,10 @@
         },
         {
           "command": "sftp.cancelAllTransfer",
+          "when": "sftp.enabled"
+        },
+        {
+          "command": "sftp.toggleUploadOnSave",
           "when": "sftp.enabled"
         },
         {

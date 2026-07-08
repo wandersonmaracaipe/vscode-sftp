@@ -2,6 +2,10 @@ class AppState {
   private _profile: string | null = null;
   private _observer: (x: any) => void;
 
+  // Runtime pause for config-driven "upload on save", toggled from a command.
+  // When true, saving a file never auto-uploads regardless of `uploadOnSave`.
+  uploadOnSavePaused: boolean = false;
+
   get profile(): string | null {
     return this._profile;
   }
