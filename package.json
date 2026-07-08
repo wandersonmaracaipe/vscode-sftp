@@ -731,8 +731,8 @@
   },
   "dependencies": {
     "async": "^3.2.6",
+    "basic-ftp": "^5.3.1",
     "fs-extra": "^11.3.6",
-    "ftp": "^0.3.10",
     "ignore": "^5.3.2",
     "joi": "^17.13.4",
     "lodash.debounce": "^4.0.8",

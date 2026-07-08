@@ -1,96 +1,62 @@
-import * as Client from 'ftp';
+import { Client } from 'basic-ftp';
 import RemoteClient, { ConnectOption } from './remoteClient';
 
-// This block mirrors the internals of the `ftp` package to patch `_send`;
-// keep the original style so it stays diffable against the upstream source.
-// (lint rules for this adapter file are relaxed in eslint.config.js)
-Client.prototype._send = function(cmd: string, cb: (err: Error) => void, promote: boolean) {
-  clearTimeout(this._keepalive);
-  if (cmd !== undefined) {
-    if (promote) this._queue.unshift({ cmd: cmd, cb: cb });
-    else this._queue.push({ cmd: cmd, cb: cb });
-
-    if (cmd === 'ABOR') {
-      if (this._pasvSocket) this._pasvSocket.aborting = true;
-      this._debug && this._debug('[connection] > ' + cmd);
-      this._socket.write(cmd + '\r\n');
-      return;
-    }
-  }
-  var queueLen = this._queue.length;
-  if (!this._curReq && queueLen && this._socket && this._socket.readable) {
-    this._curReq = this._queue.shift();
-    if (this._curReq.cmd !== 'ABOR') {
-      this._debug && this._debug('[connection] > ' + this._curReq.cmd);
-      this._socket.write(this._curReq.cmd + '\r\n');
-    }
-  } else if (!this._curReq && !queueLen && this._ending) this._reset();
-};
-
-Client.prototype.setLastMod = function(path: string, date: Date, cb) {
-  const dateStr =
-    date.getUTCFullYear() +
-    ('00' + (date.getUTCMonth() + 1)).slice(-2) +
-    ('00' + date.getUTCDate()).slice(-2) +
-    ('00' + date.getUTCHours()).slice(-2) +
-    ('00' + date.getUTCMinutes()).slice(-2) +
-    ('00' + date.getUTCSeconds()).slice(-2);
-
-  this._send('MFMT ' + dateStr + ' ' + path, cb);
-};
-
 export default class FTPClient extends RemoteClient {
-  private connected: boolean = false;
+  private _disconnectHandlers: Array<(reason: string) => void> = [];
 
   _initClient() {
-    return new Client();
+    // basic-ftp applies this timeout to the connect handshake and to idle time
+    // during transfers; it is read-only after construction. Falls back to the
+    // library default (30s) when connectTimeout isn't configured.
+    return new Client(this._option.connectTimeout);
   }
 
   _hasProvideAuth(connectOption: ConnectOption) {
-    // tslint:disable-next-line triple-equals
+    // eslint-disable-next-line eqeqeq
     return connectOption.password != undefined;
   }
 
-  _doConnect(connectOption: ConnectOption): Promise<void> {
-    this.onDisconnected(() => {
-      this.connected = false;
+  async _doConnect(connectOption: ConnectOption): Promise<void> {
+    const client = this._client as Client;
+    const { host, port, username, password, secure, secureOptions, debug } = connectOption;
+
+    // Route basic-ftp's protocol logging through the extension logger.
+    // (basic-ftp masks the PASS argument on its own, so no secret leaks here.)
+    if (typeof debug === 'function') {
+      client.ftp.verbose = true;
+      client.ftp.log = debug;
+    }
+
+    await client.access({
+      host,
+      port,
+      user: username,
+      password,
+      // node-ftp accepted true | 'control' | 'implicit'; basic-ftp only knows
+      // true (explicit AUTH TLS) and 'implicit'. Treat 'control' as explicit.
+      secure: secure === 'control' ? true : secure,
+      secureOptions: secureOptions as any,
     });
 
-    const { username, connectTimeout = 3 * 1000, ...option } = connectOption;
-    return new Promise<void>((resolve, reject) => {
-      setTimeout(() => {
-        if (!this.connected) {
-          this.end();
-          reject(new Error('Timeout while connecting to server'));
-        }
-      }, connectTimeout);
-
-      this._client
-        .on('ready', () => {
-          this.connected = true;
-          if (option.passive) {
-            this._client._pasv(resolve);
-          } else {
-            resolve();
-          }
-        })
-        .on('error', err => {
-          reject(err);
-        })
-        .connect({
-          keepalive: 1000 * 10, // 10 secs, original
-          // keepalive: 1000 * 600, // 10 mins
-          // keepalive: 1000 * 1800, // 30 mins
-          pasvTimeout: connectTimeout,
-          ...option,
-          connTimeout: connectTimeout,
-          user: username,
-        });
-    });
+    // Notify listeners when the control connection drops so the pooled
+    // filesystem can be invalidated and transparently reconnected on demand.
+    const fire = (reason: string) => {
+      this._disconnectHandlers.forEach(cb => cb(reason));
+    };
+    client.ftp.socket.once('close', () => fire('close'));
+    client.ftp.socket.once('end', () => fire('end'));
+    client.ftp.socket.once('error', () => fire('error'));
   }
 
   end() {
-    return this._client.end();
+    this._client.close();
+  }
+
+  // Overrides RemoteClient.onDisconnected: basic-ftp's Client is not an
+  // EventEmitter, so we collect handlers here and wire them to the live socket
+  // in _doConnect (onDisconnected is always registered before connect()).
+  onDisconnected(cb: (reason: string) => void) {
+    this._disconnectHandlers.push(cb);
   }
 
   getFsClient() {
