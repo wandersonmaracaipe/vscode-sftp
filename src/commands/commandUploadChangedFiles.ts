@@ -161,7 +161,7 @@ async function getRepository(git: GitAPI): Promise<Repository | undefined> {
     };
   });
 
-  const pick = await vscode.window.showQuickPick(picks, { placeHolder: 'Choose a repository' });
+  const pick = await vscode.window.showQuickPick(picks, { placeHolder: 'Escolha um repositório' });
 
   return pick && pick.repository;
 }

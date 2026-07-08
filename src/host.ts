@@ -85,8 +85,8 @@ export function showWarningMessage(message: string, ...items: string[]) {
 
 export async function showConfirmMessage(
   message: string,
-  confirmLabel: string = 'Yes',
-  cancelLabel: string = 'No'
+  confirmLabel: string = 'Sim',
+  cancelLabel: string = 'Não'
 ) {
   const result = await vscode.window.showInformationMessage(
     message,

@@ -78,7 +78,7 @@ function createTransferHandle(direction: TransferDirection) {
     // todo: abort at here. we should stop collect task
     await transfer(transferConfig, t => scheduler.add(t));
     const title =
-      direction === TransferDirection.LOCAL_TO_REMOTE ? 'SFTP: Uploading' : 'SFTP: Downloading';
+      direction === TransferDirection.LOCAL_TO_REMOTE ? 'SFTP: Enviando' : 'SFTP: Baixando';
     await runSchedulerWithProgress(scheduler, this.fileService, title);
   };
 }
@@ -107,7 +107,7 @@ export const sync2Remote = createFileHandler<SyncOption>({
       },
       t => scheduler.add(t)
     );
-    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Syncing local ➞ remote');
+    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Sincronizando local ➞ remoto');
   },
   transformOption() {
     const config = this.config;
@@ -147,7 +147,7 @@ export const sync2Local = createFileHandler<SyncOption>({
       },
       t => scheduler.add(t)
     );
-    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Syncing remote ➞ local');
+    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Sincronizando remoto ➞ local');
   },
   transformOption() {
     const config = this.config;

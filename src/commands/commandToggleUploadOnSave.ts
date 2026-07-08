@@ -11,10 +11,10 @@ export default checkCommand({
     app.state.uploadOnSavePaused = paused;
 
     const message = paused
-      ? 'SFTP: Upload on save is now PAUSED — files won\'t auto-upload until you resume.'
-      : 'SFTP: Upload on save is now ACTIVE (following each profile\'s "uploadOnSave").';
+      ? 'SFTP: Envio ao salvar PAUSADO — os arquivos não serão enviados automaticamente até você retomar.'
+      : 'SFTP: Envio ao salvar ATIVO (seguindo o "uploadOnSave" de cada perfil).';
 
-    app.sftpBarItem.showMsg(paused ? 'auto-upload paused' : 'auto-upload active', message, 3000);
+    app.sftpBarItem.showMsg(paused ? 'envio ao salvar pausado' : 'envio ao salvar ativo', message, 3000);
     window.showInformationMessage(message);
   },
 });

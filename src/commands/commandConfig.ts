@@ -67,7 +67,7 @@ export default checkCommand({
 
     vscode.window
       .showQuickPick(initDirs, {
-        placeHolder: 'Select a folder...',
+        placeHolder: 'Selecione uma pasta...',
       })
       .then(item => {
         if (item === undefined) {

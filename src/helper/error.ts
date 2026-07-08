@@ -12,8 +12,8 @@ export function reportError(err: Error | string, ctx?: string) {
     logger.error(errorString, ctx);
   }
 
-  showErrorMessage(errorString, 'Detail').then(result => {
-    if (result === 'Detail') {
+  showErrorMessage(errorString, 'Detalhes').then(result => {
+    if (result === 'Detalhes') {
       output.show();
     }
   });

@@ -35,7 +35,7 @@ export default checkCommand({
     );
 
     if (profiles.length <= 1) {
-      showInformationMessage('No Available Profile.');
+      showInformationMessage('Nenhum perfil disponível.');
       return;
     }
 
@@ -50,7 +50,7 @@ export default checkCommand({
       return;
     }
 
-    const item = await vscode.window.showQuickPick(profiles, { placeHolder: 'select a profile' });
+    const item = await vscode.window.showQuickPick(profiles, { placeHolder: 'Selecione um perfil' });
     if (item === undefined) return;
     app.state.profile = item.value;
   },

@@ -78,7 +78,7 @@ class KeepAliveRemoteFs {
     });
     this.fs.onDisconnected(this.invalid.bind(this));
 
-    app.sftpBarItem.showMsg('connecting...', connectOption.connectTimeout);
+    app.sftpBarItem.showMsg('conectando...', connectOption.connectTimeout);
     this.pendingPromise = this.fs
       .connect(connectOption, {
         askForPasswd: promptForPassword,

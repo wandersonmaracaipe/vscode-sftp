@@ -62,7 +62,7 @@ export function selectContext(): Promise<Uri | undefined> {
 
     window
       .showQuickPick(projectsList, {
-        placeHolder: 'Select a folder...',
+        placeHolder: 'Selecione um projeto...',
       })
       .then(selection => {
         if (selection) {

@@ -20,9 +20,9 @@ export const createRemoteFile = createFileHandler<FileHandleOption & { skipDir?:
     }
     if (existing) {
       const overwrite = await showConfirmMessage(
-        `"${remoteFsPath}" already exists on the remote. Overwrite it?`,
-        'Overwrite',
-        'Cancel'
+        `"${remoteFsPath}" já existe no remoto. Deseja sobrescrever?`,
+        'Sobrescrever',
+        'Cancelar'
       );
       if (!overwrite) {
         return;

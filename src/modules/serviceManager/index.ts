@@ -123,15 +123,15 @@ export function createFileService(config: any, workspace: string) {
     const filepath = simplifyPath(localFsPath);
     if (task.isCancelled()) {
       logger.info(`cancel transfer ${localFsPath}`);
-      app.sftpBarItem.showMsg(`cancelled ${filename}`, filepath, 2000 * 2);
+      app.sftpBarItem.showMsg(`cancelado ${filename}`, filepath, 2000 * 2);
     } else if (error) {
       // if ((error as any).reported !== true) {
       reportError(error, `when ${transferType} ${localFsPath}`);
       // }
-      app.sftpBarItem.showMsg(`failed ${filename}`, filepath, 2000 * 2);
+      app.sftpBarItem.showMsg(`falhou ${filename}`, filepath, 2000 * 2);
     } else {
       logger.info(`${transferType} ${localFsPath}`);
-      app.sftpBarItem.showMsg(`done ${filename}`, filepath, 2000 * 2);
+      app.sftpBarItem.showMsg(`concluído ${filename}`, filepath, 2000 * 2);
     }
   });
 

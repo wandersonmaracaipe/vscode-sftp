@@ -7,8 +7,8 @@ import logger from '../logger';
 let hasWarnedModifedTimePermission = false;
 
 export enum TransferDirection {
-  LOCAL_TO_REMOTE = 'local ➞ remote',
-  REMOTE_TO_LOCAL = 'remote ➞ local',
+  LOCAL_TO_REMOTE = 'local ➞ remoto',
+  REMOTE_TO_LOCAL = 'remoto ➞ local',
 }
 
 interface FileHandle {

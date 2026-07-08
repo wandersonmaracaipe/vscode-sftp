@@ -125,7 +125,7 @@ export default class RemoteTreeData
               ? COMMAND_REMOTEEXPLORER_EDITINLOCAL
               : COMMAND_REMOTEEXPLORER_VIEW_CONTENT,
             arguments: [item],
-            title: 'View Remote Resource',
+            title: 'Ver Recurso Remoto',
           },
     };
   }

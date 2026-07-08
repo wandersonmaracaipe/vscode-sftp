@@ -19,7 +19,7 @@ export default checkFileCommand({
 */
     const result = await window.showInputBox({
         value: '',
-        prompt: 'Please input folder name',
+        prompt: 'Digite o nome da pasta',
     });
 
 
