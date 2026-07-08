@@ -1,21 +1,21 @@
 {
-  "name": "sftp",
-  "displayName": "SFTP",
+  "name": "valuor-sftp",
+  "displayName": "Valuor SFTP",
   "description": "SFTP/FTP sync",
-  "version": "1.16.3",
-  "publisher": "Natizyskunk",
-  "author": "Natizyskunk <natan.fourie@hotmail.fr> (https://github.com/Natizyskunk)",
+  "version": "1.17.0",
+  "publisher": "valuor",
+  "author": "Valuor <edson@we3tecnologia.com.br>",
   "engines": {
     "vscode": "^1.75.0"
   },
   "bugs": {
-    "url": "https://github.com/Natizyskunk/vscode-sftp/issues",
-    "email": "natan.fourie@hotmail.fr"
+    "url": "https://github.com/wandersonmaracaipe/vscode-sftp/issues",
+    "email": "edson@we3tecnologia.com.br"
   },
-  "homepage": "https://github.com/Natizyskunk/vscode-sftp/blob/master/README.md",
+  "homepage": "https://github.com/wandersonmaracaipe/vscode-sftp#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Natizyskunk/vscode-sftp.git"
+    "url": "https://github.com/wandersonmaracaipe/vscode-sftp.git"
   },
   "license": "MIT",
   "categories": [
@@ -703,7 +703,7 @@
     "lint:fix": "eslint src --fix",
     "test": "jest",
     "package": "vsce package",
-    "pub:debug": "rm -rf _debug && mkdir _debug && vsce package --out _debug/sftp-debug.vsix && cd _debug && git init && git commit --allow-empty -m 'update debug package' && git checkout -b debug-pacakge && cp ../INSTALL_DEBUG.md README.md  && git add . && git commit -am 'update debug package' && git push git@github.com:Natizyskunk/vscode-sftp.git debug-pacakge --force"
+    "pub:debug": "rm -rf _debug && mkdir _debug && vsce package --out _debug/sftp-debug.vsix && cd _debug && git init && git commit --allow-empty -m 'update debug package' && git checkout -b debug-pacakge && cp ../INSTALL_DEBUG.md README.md  && git add . && git commit -am 'update debug package' && git push git@github.com:wandersonmaracaipe/vscode-sftp.git debug-pacakge --force"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

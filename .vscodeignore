@@ -1,7 +1,7 @@
 *
 */**
 **/.DS_Store
-!node_modules/**/*
+
 !dist/extension.js
 !package.json
 !README.md
@@ -9,3 +9,11 @@
 !LICENSE
 !resources/**/*
 !schema/**/*
+
+# Only `ssh2` is externalized by webpack (see webpack.config.js). Everything
+# else is bundled into dist/extension.js, so ship just ssh2's runtime tree.
+!node_modules/ssh2/**
+!node_modules/asn1/**
+!node_modules/safer-buffer/**
+!node_modules/bcrypt-pbkdf/**
+!node_modules/tweetnacl/**

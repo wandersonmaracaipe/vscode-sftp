@@ -22,7 +22,7 @@ app.sftpBarItem = new StatusBarItem(
       return 'SFTP';
     }
   },
-  'SFTP@Natizyskunk',
+  'Valuor SFTP',
   COMMAND_TOGGLE_OUTPUT
 );
 app.fsCache = LRU<string, string>({ max: 6 });

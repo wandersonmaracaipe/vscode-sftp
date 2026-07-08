@@ -1,3 +1,12 @@
+## 1.17.0 - 2026-07-08
+Modernization release under the **Valuor** fork (based on [Natizyskunk/vscode-sftp](https://github.com/Natizyskunk/vscode-sftp), originally by [liximomo](https://github.com/liximomo/vscode-sftp)).
+
+* **Build fixes**: restored a compiling build — added the missing `COMMAND_UPLOAD_FILE/FOLDER_TO_ALL_PROFILES` imports and removed a broken `vscode-uri` usage in path resolution (`getFileSystemPath` now normalizes the string path and no longer crashes on not-yet-existing paths). Restored a green test suite.
+* **Toolchain**: TypeScript 3.9 → 5, replaced the deprecated TSLint with ESLint 9 (`typescript-eslint`), updated `@types/node` (9 → 20) and pinned `@types/vscode` to match `engines`, modernized `tsconfig` (ES2020, `skipLibCheck`, `esModuleInterop`). Added `lint` / `lint:fix` / `typecheck` scripts.
+* **Dependencies & security**: updated `ssh2` (1.13 → 1.17), `fs-extra` (10 → 11), `joi` (10 → 17), plus `webpack`, `jest`, `memfs` and others. Resolved **all** npm audit vulnerabilities (27, incl. 2 critical / 11 high → **0**).
+* **Bug fix**: a redundant file-descriptor `close()` after an already-completed transfer no longer aborts the transfer.
+* **Rebrand**: published as **Valuor SFTP** under the `valuor` publisher. Full credit to the original and upstream authors.
+
 ## 1.16.3 - 2023-06-16
 * [#356] New Feature : Upload to all profiles (Pull request [#313](https://github.com/Natizyskunk/vscode-sftp/pull/313) from @wewawa vscode-sftp:create_multi_command).
 * [#357] Fix : Correcting Typo 'avaliable' => 'available' (Pull request [#343](https://github.com/Natizyskunk/vscode-sftp/pull/343) from @kjo-sdds vscode-sftp:develop).
