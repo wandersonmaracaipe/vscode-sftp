@@ -6,15 +6,22 @@ Release de modernização sob o fork da **Valuor** (baseado em [Natizyskunk/vsco
 * **Dependências e segurança**: atualizados `ssh2` (1.13 → 1.17), `fs-extra` (10 → 11), `joi` (10 → 17), além de `webpack`, `jest`, `memfs` e outros. Resolvidas **todas** as vulnerabilidades do npm audit (27, incluindo 2 críticas / 11 altas → **0**). A atualização do `ssh2` corrige o travamento "isDate is not a function" em versões recentes do VS Code (issues #586 / #590 do projeto de origem).
 * **Transporte FTP**: a biblioteca `ftp` (abandonada) foi substituída pela [`basic-ftp`](https://github.com/patrickjuchli/basic-ftp), mantida e baseada em promises — melhor suporte a FTPS e timestamps via MLSD em servidores modernos, e agora ela é empacotada no `dist` (sem `node_modules` extras no pacote). O comportamento do FileSystem foi preservado. Em servidores que não expõem horários de modificação, a sincronização recorre à comparação por tamanho.
 * **Correções de bugs**:
+  * **SFTP voltou a funcionar**: a conexão SFTP registrava `this.end()` (que retorna `undefined`) como listener e encerrava o cliente durante o connect — **toda conexão SFTP falhava**; corrigido. E **todo upload SFTP travava** porque o `_put` só resolvia no evento `finish`, mas o WriteStream do `ssh2` se auto-destrói e emite `close`; agora resolve em `finish` ou `close`. (Ambos capturados pelos novos testes de integração.)
+  * `esModuleInterop` quebrava, em runtime, `new PQueue()` (FTP) e `debounce()` (file watcher) por causa de `import * as` de módulos CommonJS; ajustado para `import X = require(...)`.
   * Um `close()` de descritor redundante após uma transferência já concluída não aborta mais a transferência.
   * "Config Not Found" ao salvar/enviar não acontece mais quando o VS Code informa o caminho do arquivo com diferença de maiúsculas/minúsculas em relação ao caminho base configurado — a busca de serviço agora é case-insensitive no Windows (issue #428 do projeto de origem).
   * Criar um arquivo pelo Remote Explorer agora pede confirmação antes de sobrescrever um arquivo remoto existente, em vez de truncá-lo silenciosamente (issue #228 do projeto de origem).
   * Links simbólicos remotos que apontam para diretórios agora são navegáveis no Remote Explorer via SFTP (issue #177 do projeto de origem).
 * **Novos recursos**:
+  * **Senhas no cofre**: as senhas podem ser guardadas criptografadas no `SecretStorage` do VS Code (comandos **"Salvar Senha no Cofre"** / **"Remover Senha do Cofre"**), evitando texto plano no `sftp.json`. O connect consulta o cofre antes de pedir a senha.
+  * Novo comando **"SFTP: Testar Conexão"** que valida cada configuração e reporta sucesso/falha.
+  * Opção **`useGitignore`**: reaproveita os padrões do `.gitignore` do projeto como regras de ignore.
+  * **Reconexão automática**: falhas de conexão transitórias (rede) são repetidas automaticamente (até 3 tentativas); falhas de autenticação e cancelamentos não são repetidos.
+  * A notificação de progresso de transferências com vários arquivos agora mostra também **bytes transferidos e velocidade**.
   * Excluir itens remotos agora pede confirmação por um diálogo modal de aviso (em vez de uma notificação fácil de ignorar), e resume exclusões de múltipla seleção.
   * Novo comando **"SFTP: Toggle Upload On Save"** para pausar/retomar em tempo de execução o envio automático ao salvar, sem editar o `sftp.json`.
   * O item da barra de status do SFTP agora é um indicador de conexão/saúde (ícone de servidor quando pronto, ícone de erro quando uma conexão falha).
-  * Envios/downloads/sincronizações com vários arquivos exibem uma notificação de progresso cancelável (concluídos/total + arquivo atual). Transferências de um único arquivo permanecem no _spinner_ da barra de status.
+* **Qualidade e CI**: adicionados workflows de CI (typecheck/lint/testes/build) e de publicação por tag (VS Code Marketplace + **Open VSX** + GitHub Release), além de uma suíte de **testes de integração** SFTP/FTP contra servidores em processo.
 * **Rebrand**: publicado como **Valuor SFTP** sob o publisher `Valuor`. Todo o crédito aos autores originais e do projeto de origem.
 
 <!-- As entradas anteriores preservam o histórico do projeto de origem (em inglês). -->
