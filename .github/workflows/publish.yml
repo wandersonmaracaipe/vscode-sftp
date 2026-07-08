@@ -1,7 +1,7 @@
 name: Publicar extensão
 
 # Publica a extensão no VS Code Marketplace e cria um GitHub Release
-# automaticamente quando você faz push de uma tag de versão (ex.: v1.17.0).
+# automaticamente quando você faz push de uma tag de versão (ex.: v1.20.0).
 #
 # Pré-requisitos (uma vez):
 #  1. Crie o publisher "Valuor" em https://marketplace.visualstudio.com/manage

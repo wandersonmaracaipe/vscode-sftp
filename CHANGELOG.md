@@ -1,4 +1,4 @@
-## 1.17.0 - 2026-07-08
+## 1.20.0 - 2026-07-08
 Release de modernização sob o fork da **Valuor** (baseado em [Natizyskunk/vscode-sftp](https://github.com/Natizyskunk/vscode-sftp), originalmente de [liximomo](https://github.com/liximomo/vscode-sftp)).
 
 * **Correções de build**: restaurada a compilação — adicionados os imports ausentes de `COMMAND_UPLOAD_FILE/FOLDER_TO_ALL_PROFILES` e removido um uso quebrado de `vscode-uri` na resolução de caminhos (`getFileSystemPath` agora normaliza o caminho como string e não trava mais em caminhos ainda inexistentes). Suíte de testes restabelecida.
