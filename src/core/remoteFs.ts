@@ -4,7 +4,7 @@ import logger from '../logger';
 import app from '../app';
 import StatusBarItem from '../ui/statusBarItem';
 import { getStoredPassword } from '../modules/secretStorage';
-import { ConnectOption } from './remote-client/remoteClient';
+import { ConnectOption, ErrorCode } from './remote-client/remoteClient';
 import {
   FileSystem,
   RemoteFileSystem,
@@ -12,6 +12,31 @@ import {
   FTPFileSystem,
 } from './fs';
 import localFs from './localFs';
+
+const MAX_CONNECT_ATTEMPTS = 3; // 1 tentativa inicial + 2 novas tentativas
+const RECONNECT_DELAY_MS = 1000;
+
+function delay(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
+// Só repete falhas de conexão que parecem transitórias (rede); nunca falhas de
+// autenticação nem quando o usuário cancela a conexão.
+function isTransientConnectError(err: any): boolean {
+  if (!err) return false;
+  if (err.code === ErrorCode.CONNECT_CANCELLED) return false;
+  const code = typeof err.code === 'string' ? err.code : '';
+  if (
+    ['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'ENETUNREACH', 'EPIPE', 'EAI_AGAIN'].indexOf(
+      code
+    ) !== -1
+  ) {
+    return true;
+  }
+  const msg = String((err && err.message) || '').toLowerCase();
+  if (/authentication|password|permission denied|all configured/.test(msg)) return false;
+  return /timeout|socket hang up|econnreset|network|reset by peer/.test(msg);
+}
 
 function hashOption(opiton) {
   return Object.keys(opiton)
@@ -73,46 +98,78 @@ class KeepAliveRemoteFs {
       throw new Error(`Protocolo não suportado: ${option.protocol}`);
     }
 
-    this.fs = new FsConstructor(upath, {
-      clientOption: connectOption,
-      remoteTimeOffsetInHours: option.remoteTimeOffsetInHours,
-    });
-    this.fs.onDisconnected(this.invalid.bind(this));
+    // Prefer a password saved in the OS keychain; fall back to prompting.
+    const askForPasswd = async (msg: string) => {
+      const saved = await getStoredPassword(connectOption);
+      if (saved !== undefined) {
+        return saved;
+      }
+      return promptForPassword(msg);
+    };
 
     app.sftpBarItem.showMsg('conectando...', connectOption.connectTimeout);
-    this.pendingPromise = this.fs
-      .connect(connectOption, {
-        // Prefer a password saved in the OS keychain; fall back to prompting.
-        askForPasswd: async (msg: string) => {
-          const saved = await getStoredPassword(connectOption);
-          if (saved !== undefined) {
-            return saved;
-          }
-          return promptForPassword(msg);
-        },
-      })
-      .then(
-        () => {
+    this.pendingPromise = (async () => {
+      let lastError;
+      for (let attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++) {
+        // A fresh client per attempt. onDisconnected is bound before connect
+        // (some clients wire the handler during connect), but `invalid()` only
+        // acts once the connection is established, so a failed attempt's
+        // teardown won't disturb the retry.
+        this.fs = new FsConstructor(upath, {
+          clientOption: connectOption,
+          remoteTimeOffsetInHours: option.remoteTimeOffsetInHours,
+        });
+        this.fs.onDisconnected(this.invalid.bind(this));
+
+        try {
+          await this.fs.connect(connectOption, { askForPasswd });
           this.isValid = true;
           app.sftpBarItem.updateStatus(StatusBarItem.Status.ok);
           app.sftpBarItem.reset();
           return this.fs;
-        },
-        err => {
-          this.fs.end();
-          this.invalid('error');
-          app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
-          throw err;
+        } catch (err) {
+          lastError = err;
+          try {
+            this.fs.end();
+          } catch {
+            // ignore teardown errors
+          }
+
+          if (attempt >= MAX_CONNECT_ATTEMPTS || !isTransientConnectError(err)) {
+            break;
+          }
+
+          logger.warn(
+            `Falha ao conectar (tentativa ${attempt}/${MAX_CONNECT_ATTEMPTS}): ` +
+              `${err && err.message}. Tentando novamente…`
+          );
+          app.sftpBarItem.showMsg('reconectando…', connectOption.connectTimeout);
+          await delay(RECONNECT_DELAY_MS);
         }
-      );
+      }
+
+      this.pendingPromise = null;
+      this.isValid = false;
+      app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
+      throw lastError;
+    })();
 
     return this.pendingPromise;
   }
 
   invalid(reason: string) {
-    this.pendingPromise = null;
-    this.fs.end();
+    // Ignore disconnect events that fire while we're still (re)connecting;
+    // only an established connection dropping should invalidate the pool entry.
+    if (!this.isValid) {
+      return;
+    }
     this.isValid = false;
+    this.pendingPromise = null;
+    try {
+      this.fs.end();
+    } catch {
+      // ignore
+    }
   }
 
   end() {
