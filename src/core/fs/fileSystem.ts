@@ -87,6 +87,13 @@ export default abstract class FileSystem {
   abstract rename(srcPath: string, destPath: string): Promise<void>;
   abstract renameAtomic(srcPath: string, destPath: string): Promise<void>;
 
+  // Stats a path following symbolic links. Defaults to lstat (no follow);
+  // filesystems that can resolve links (e.g. SFTP) override this so callers
+  // can tell whether a symlink ultimately points at a directory (issue #177).
+  stat(path: string): Promise<FileStats> {
+    return this.lstat(path);
+  }
+
   static abortReadableStream(stream: Readable) {
     const err = new Error('Transfer Aborted') as FileSystemError;
     err.code = ERROR_MSG_STREAM_INTERRUPT;

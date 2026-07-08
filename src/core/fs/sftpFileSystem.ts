@@ -67,6 +67,21 @@ export default class SFTPFileSystem extends RemoteFileSystem {
     });
   }
 
+  // Follows symbolic links so the caller sees the target's real type (e.g. a
+  // symlink pointing at a directory shows up as a directory). Issue #177.
+  stat(path: string): Promise<FileStats> {
+    return new Promise((resolve, reject) => {
+      this.sftp.stat(path, (err, stat) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        resolve(this.toFileStat(stat));
+      });
+    });
+  }
+
   open(
     path: string,
     flags: string,

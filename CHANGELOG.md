@@ -5,7 +5,11 @@ Modernization release under the **Valuor** fork (based on [Natizyskunk/vscode-sf
 * **Toolchain**: TypeScript 3.9 → 5, replaced the deprecated TSLint with ESLint 9 (`typescript-eslint`), updated `@types/node` (9 → 20) and pinned `@types/vscode` to match `engines`, modernized `tsconfig` (ES2020, `skipLibCheck`, `esModuleInterop`). Added `lint` / `lint:fix` / `typecheck` scripts.
 * **Dependencies & security**: updated `ssh2` (1.13 → 1.17), `fs-extra` (10 → 11), `joi` (10 → 17), plus `webpack`, `jest`, `memfs` and others. Resolved **all** npm audit vulnerabilities (27, incl. 2 critical / 11 high → **0**). The `ssh2` bump fixes the "isDate is not a function" crash on recent VS Code builds (upstream issues #586 / #590).
 * **FTP transport**: replaced the abandoned `ftp` package with the maintained, promise-based [`basic-ftp`](https://github.com/patrickjuchli/basic-ftp) — better FTPS support and MLSD-based timestamps on modern servers, and it now bundles into `dist` (no extra shipped `node_modules`). The FileSystem behavior is preserved. On servers that don't expose modification times, sync falls back to size comparison.
-* **Bug fix**: a redundant file-descriptor `close()` after an already-completed transfer no longer aborts the transfer.
+* **Bug fixes**:
+  * A redundant file-descriptor `close()` after an already-completed transfer no longer aborts the transfer.
+  * "Config Not Found" on save/upload no longer happens when VS Code reports the file path with different casing than the configured base path — the service lookup is now case-insensitive on Windows (upstream issue #428).
+  * Creating a file through the Remote Explorer now asks for confirmation before overwriting an existing remote file instead of silently truncating it (upstream issue #228).
+  * Remote symbolic links that point to directories are now navigable in the Remote Explorer over SFTP (upstream issue #177).
 * **Rebrand**: published as **Valuor SFTP** under the `valuor` publisher. Full credit to the original and upstream authors.
 
 ## 1.16.3 - 2023-06-16

@@ -55,6 +55,17 @@ function normalizePathForTrie(pathname) {
   return path.normalize(pathname);
 }
 
+// Key used to index services in the trie. On Windows the filesystem is
+// case-insensitive, but the trie matches path segments exactly, so a fsPath
+// coming back from VS Code with different casing than the configured base path
+// would fail to resolve and raise a spurious "Config Not Found" (issue #428).
+// Lower-casing the whole key on Windows makes the lookup case-insensitive.
+// The service still keeps its original-cased baseDir for display and transfers.
+function toTrieKey(pathname: string): string {
+  const normalized = normalizePathForTrie(pathname);
+  return isWindows ? normalized.toLowerCase() : normalized;
+}
+
 export function getBasePath(context: string, workspace: string) {
   let dirpath;
   if (context) {
@@ -95,7 +106,7 @@ export function createFileService(config: any, workspace: string) {
 
   logger.info(`config at ${normalizedBasePath}`, maskConfig(config));
 
-  serviceManager.add(normalizedBasePath, service);
+  serviceManager.add(toTrieKey(normalizedBasePath), service);
   service.name = config.name;
   service.setConfigValidator(validateConfig);
   service.setWatcherService(watcherService);
@@ -135,14 +146,14 @@ export function getFileService(uri: Uri): FileService {
       fileService = remoteRoot.explorerContext.fileService;
     }
   } else {
-    fileService = serviceManager.findPrefix(normalizePathForTrie(uri.fsPath));
+    fileService = serviceManager.findPrefix(toTrieKey(uri.fsPath));
   }
 
   return fileService;
 }
 
 export function disposeFileService(fileService: FileService) {
-  serviceManager.remove(fileService.baseDir);
+  serviceManager.remove(toTrieKey(fileService.baseDir));
   fileService.dispose();
 }
 

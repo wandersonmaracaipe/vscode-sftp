@@ -1,5 +1,6 @@
 import { refreshRemoteExplorer } from './shared';
 import { fileOperations } from '../core';
+import { showConfirmMessage } from '../host';
 import createFileHandler from './createFileHandler';
 import { FileHandleOption } from './option';
 
@@ -8,6 +9,25 @@ export const createRemoteFile = createFileHandler<FileHandleOption & { skipDir?:
   async handle(option) {
     const remoteFs = await this.fileService.getRemoteFileSystem(this.config);
     const { remoteFsPath } = this.target;
+
+    // #228: creating a file that already exists remotely would silently
+    // truncate it. Confirm before overwriting an existing remote entry.
+    let existing;
+    try {
+      existing = await remoteFs.lstat(remoteFsPath);
+    } catch {
+      existing = undefined; // doesn't exist yet — safe to create
+    }
+    if (existing) {
+      const overwrite = await showConfirmMessage(
+        `"${remoteFsPath}" already exists on the remote. Overwrite it?`,
+        'Overwrite',
+        'Cancel'
+      );
+      if (!overwrite) {
+        return;
+      }
+    }
 
     let promise;
     promise = fileOperations.createFile(remoteFsPath, remoteFs, {});

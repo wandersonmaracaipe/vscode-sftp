@@ -154,10 +154,23 @@ export default class RemoteTreeData
       return !ignore.ignores(relativePath);
     }
 
-    return fileEntries
-      .filter(filterFile)
-      .map(file => {
-        const isDirectory = file.type === FileType.Directory;
+    const items = await Promise.all(
+      fileEntries.filter(filterFile).map(async file => {
+        let isDirectory = file.type === FileType.Directory;
+        // #177: a symlink pointing at a directory should be navigable. Follow
+        // the link to learn the target's real type. On filesystems that can't
+        // resolve links (FTP) `stat` falls back to lstat, so behavior is
+        // unchanged there.
+        if (file.type === FileType.SymbolicLink) {
+          try {
+            const realStat = await remotefs.stat(file.fspath);
+            isDirectory = realStat.type === FileType.Directory;
+          } catch {
+            // broken or unresolvable link — treat it as a leaf file
+            isDirectory = false;
+          }
+        }
+
         const newResource = UResource.updateResource(item.resource, {
           remotePath: file.fspath,
         });
@@ -175,7 +188,9 @@ export default class RemoteTreeData
           return newItem;
         }
       })
-      .sort(dirFirstSort);
+    );
+
+    return items.sort(dirFirstSort);
   }
 
   async getParent(item: ExplorerChild): Promise<ExplorerItem> {
