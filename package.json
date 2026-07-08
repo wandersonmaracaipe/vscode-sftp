@@ -3,14 +3,14 @@
   "displayName": "Valuor SFTP",
   "description": "SFTP/FTP sync",
   "version": "1.17.0",
-  "publisher": "valuor",
-  "author": "Valuor <edson@we3tecnologia.com.br>",
+  "publisher": "Valuor",
+  "author": "Valuor <wanderson@valuor.com.br>",
   "engines": {
     "vscode": "^1.75.0"
   },
   "bugs": {
     "url": "https://github.com/wandersonmaracaipe/vscode-sftp/issues",
-    "email": "edson@we3tecnologia.com.br"
+    "email": "wanderson@valuor.com.br"
   },
   "homepage": "https://github.com/wandersonmaracaipe/vscode-sftp#readme",
   "repository": {
