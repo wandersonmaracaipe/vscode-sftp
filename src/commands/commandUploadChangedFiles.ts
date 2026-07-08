@@ -147,7 +147,7 @@ async function getRepository(git: GitAPI): Promise<Repository | undefined> {
   }
 
   if (git.repositories.length === 0) {
-    throw new Error('There are no available repositories');
+    throw new Error('Não há repositórios disponíveis');
   }
 
   const picks = git.repositories.map(repo => {

@@ -137,7 +137,7 @@ function filesIgnoredFromConfig(config: FileServiceConfig): string[] {
     cache.set(ignoreFile, ignoreFromFile);
   } else {
     throw new Error(
-      `File ${ignoreFile} not found. Check your config of "ignoreFile"`
+      `Arquivo ${ignoreFile} não encontrado. Verifique a sua configuração de "ignoreFile".`
     );
   }
 
@@ -191,7 +191,7 @@ function mergeConfigWithExternalRefer(
     const remoteMap = getUserSetting(SETTING_KEY_REMOTE);
     const remote = remoteMap.get<Record<string, any>>(config.remote);
     if (!remote) {
-      throw new Error(`Can\'t not find remote "${config.remote}"`);
+      throw new Error(`Não foi possível encontrar o remote "${config.remote}".`);
     }
     const remoteKeyMapping = new Map([['scheme', 'protocol']]);
 
@@ -333,7 +333,7 @@ function getCompleteConfig(
     const evnVarName = mergedConfig.agent.slice(1);
     const val = process.env[evnVarName];
     if (!val) {
-      throw new Error(`Environment variable "${evnVarName}" not found`);
+      throw new Error(`Variável de ambiente "${evnVarName}" não encontrada.`);
     }
     mergedConfig.agent = val;
   }
@@ -530,9 +530,9 @@ export default class FileService {
       const profile = config.profiles![useProfile];
       if (!profile) {
         throw new Error(
-          `Unkown Profile "${useProfile}".` +
-            ' Please check your profile setting.' +
-            ' You can set a profile by running command `SFTP: Set Profile`.'
+          `Perfil desconhecido "${useProfile}".` +
+            ' Verifique a configuração de perfis.' +
+            ' Você pode definir um perfil com o comando `SFTP: Set Profile`.'
         );
       }
       config = mergeProfile(config, profile);
@@ -542,10 +542,10 @@ export default class FileService {
     const error =
       this._configValidator && this._configValidator(completeConfig);
     if (error) {
-      let errorMsg = `Config validation fail: ${error.message}.`;
+      let errorMsg = `Falha na validação da configuração: ${error.message}.`;
       // tslint:disable-next-line triple-equals
       if (hasProfile && app.state.profile == null) {
-        errorMsg += ' You might want to set a profile first.';
+        errorMsg += ' Talvez você precise definir um perfil primeiro.';
       }
       throw new Error(errorMsg);
     }

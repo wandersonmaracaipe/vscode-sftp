@@ -101,7 +101,7 @@ export default class FTPFileSystem extends RemoteFileSystem {
     const fileStat = stats.find(ns => ns.name === nameIdentity);
 
     if (!fileStat) {
-      throw new Error('file not exist');
+      throw new Error('o arquivo não existe');
     }
 
     return fileStat;
@@ -136,7 +136,7 @@ export default class FTPFileSystem extends RemoteFileSystem {
     const stream = await this.atomicGet(path);
 
     if (!stream) {
-      throw new Error('create ReadStream failed');
+      throw new Error('falha ao criar o stream de leitura');
     }
 
     return stream;
@@ -183,7 +183,7 @@ export default class FTPFileSystem extends RemoteFileSystem {
       if (stat) {
         if (stat.type !== FileType.Directory) {
           logger.error(`${dir} (type = ${stat.type})is not a directory`);
-          throw new Error(`${dir} is not a valid directory path`);
+          throw new Error(`${dir} não é um caminho de diretório válido`);
         }
 
         return;

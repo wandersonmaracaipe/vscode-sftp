@@ -69,7 +69,7 @@ class KeepAliveRemoteFs {
       };
       FsConstructor = FTPFileSystem;
     } else {
-      throw new Error(`unsupported protocol ${option.protocol}`);
+      throw new Error(`Protocolo não suportado: ${option.protocol}`);
     }
 
     this.fs = new FsConstructor(upath, {

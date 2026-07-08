@@ -42,7 +42,7 @@ export default class RemoteExplorer {
         if (uri.toString(true) == "file:///${command:sftp.sync.remoteToLocal}") {
           throw '';
         } else {
-          throw new Error(`Config Not Found. (${uri.toString(true)})`);
+          throw new Error(`Configuração não encontrada. (${uri.toString(true)})`);
         }
       }
       const config = fileService.getConfig();
