@@ -25,6 +25,8 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,12 +54,11 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npx @vscode/vsce publish --packagePath valuor-sftp-${{ github.ref_name }}.vsix
 
-      # Opcional: publicar também no Open VSX (VSCodium, Cursor, Gitpod, etc.).
-      # Cadastre o secret OVSX_PAT (https://open-vsx.org) e descomente:
-      # - name: Publicar no Open VSX
-      #   env:
-      #     OVSX_PAT: ${{ secrets.OVSX_PAT }}
-      #   run: npx ovsx publish valuor-sftp-${{ github.ref_name }}.vsix
+      # Publica também no Open VSX (VSCodium, Cursor, Gitpod, etc.).
+      # Só roda se o secret OVSX_PAT estiver configurado (https://open-vsx.org).
+      - name: Publicar no Open VSX
+        if: ${{ env.OVSX_PAT != '' }}
+        run: npx ovsx publish valuor-sftp-${{ github.ref_name }}.vsix -p "$OVSX_PAT"
 
       - name: Criar GitHub Release
         uses: softprops/action-gh-release@v2

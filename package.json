@@ -1,7 +1,7 @@
 {
   "name": "valuor-sftp",
   "displayName": "Valuor SFTP",
-  "description": "SFTP/FTP sync",
+  "description": "Valuor SFTP — sincronização SFTP/FTP para o VS Code",
   "version": "1.17.0",
   "publisher": "Valuor",
   "author": "Valuor <wanderson@valuor.com.br>",
