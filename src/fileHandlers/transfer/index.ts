@@ -1,6 +1,50 @@
+import * as vscode from 'vscode';
 import { refreshRemoteExplorer } from '../shared';
+import { upath, FileService, TransferScheduler } from '../../core';
 import createFileHandler, { FileHandlerContext } from '../createFileHandler';
 import { transfer, sync, TransferOption, SyncOption, TransferDirection } from './transfer';
+
+// Runs a collected transfer scheduler, surfacing a cancellable progress
+// notification for multi-file operations. Single-file transfers (including
+// upload-on-save) keep relying on the status-bar spinner to avoid popping a
+// notification on every save. Byte-level counting is intentionally avoided so
+// the transfer stream pipeline stays untouched; progress is by file count.
+async function runSchedulerWithProgress(
+  scheduler: TransferScheduler,
+  fileService: FileService,
+  title: string
+) {
+  const total = scheduler.size;
+  if (total <= 1) {
+    await scheduler.run();
+    return;
+  }
+
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title,
+      cancellable: true,
+    },
+    async (progress, token) => {
+      let done = 0;
+      progress.report({ message: `0/${total}` });
+      const unsubscribe = fileService.afterTransfer((_err, task) => {
+        done += 1;
+        progress.report({
+          increment: 100 / total,
+          message: `${done}/${total} — ${upath.basename(task.localFsPath)}`,
+        });
+      });
+      token.onCancellationRequested(() => fileService.cancelTransferTasks());
+      try {
+        await scheduler.run();
+      } finally {
+        unsubscribe();
+      }
+    }
+  );
+}
 
 function createTransferHandle(direction: TransferDirection) {
   return async function handle(this: FileHandlerContext, option) {
@@ -33,7 +77,9 @@ function createTransferHandle(direction: TransferDirection) {
     }
     // todo: abort at here. we should stop collect task
     await transfer(transferConfig, t => scheduler.add(t));
-    await scheduler.run();
+    const title =
+      direction === TransferDirection.LOCAL_TO_REMOTE ? 'SFTP: Uploading' : 'SFTP: Downloading';
+    await runSchedulerWithProgress(scheduler, this.fileService, title);
   };
 }
 
@@ -61,7 +107,7 @@ export const sync2Remote = createFileHandler<SyncOption>({
       },
       t => scheduler.add(t)
     );
-    await scheduler.run();
+    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Syncing local ➞ remote');
   },
   transformOption() {
     const config = this.config;
@@ -101,7 +147,7 @@ export const sync2Local = createFileHandler<SyncOption>({
       },
       t => scheduler.add(t)
     );
-    await scheduler.run();
+    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Syncing remote ➞ local');
   },
   transformOption() {
     const config = this.config;

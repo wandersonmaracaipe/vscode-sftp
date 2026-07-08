@@ -107,7 +107,7 @@ export interface WatcherService {
   dispose(watcherBase: string): void;
 }
 
-interface TransferScheduler {
+export interface TransferScheduler {
   // readonly _scheduler: Scheduler;
   size: number;
   add(x: TransferTask): void;
@@ -443,12 +443,14 @@ export default class FileService {
     this._pendingTransferTasks.clear();
   }
 
-  beforeTransfer(listener: (task: TransferTask) => void) {
+  beforeTransfer(listener: (task: TransferTask) => void): () => void {
     this._eventEmitter.on(Event.BEFORE_TRANSFER, listener);
+    return () => this._eventEmitter.removeListener(Event.BEFORE_TRANSFER, listener);
   }
 
-  afterTransfer(listener: (err: Error | null, task: TransferTask) => void) {
+  afterTransfer(listener: (err: Error | null, task: TransferTask) => void): () => void {
     this._eventEmitter.on(Event.AFTER_TRANSFER, listener);
+    return () => this._eventEmitter.removeListener(Event.AFTER_TRANSFER, listener);
   }
 
   createTransferScheduler(concurrency): TransferScheduler {
