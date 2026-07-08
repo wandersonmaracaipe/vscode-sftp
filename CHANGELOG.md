@@ -15,7 +15,7 @@ Release de modernização sob o fork da **Valuor** (baseado em [Natizyskunk/vsco
   * Novo comando **"SFTP: Toggle Upload On Save"** para pausar/retomar em tempo de execução o envio automático ao salvar, sem editar o `sftp.json`.
   * O item da barra de status do SFTP agora é um indicador de conexão/saúde (ícone de servidor quando pronto, ícone de erro quando uma conexão falha).
   * Envios/downloads/sincronizações com vários arquivos exibem uma notificação de progresso cancelável (concluídos/total + arquivo atual). Transferências de um único arquivo permanecem no _spinner_ da barra de status.
-* **Rebrand**: publicado como **Valuor SFTP** sob o publisher `valuor`. Todo o crédito aos autores originais e do projeto de origem.
+* **Rebrand**: publicado como **Valuor SFTP** sob o publisher `Valuor`. Todo o crédito aos autores originais e do projeto de origem.
 
 <!-- As entradas anteriores preservam o histórico do projeto de origem (em inglês). -->
 

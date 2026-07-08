@@ -1,0 +1,66 @@
+name: Publicar extensão
+
+# Publica a extensão no VS Code Marketplace e cria um GitHub Release
+# automaticamente quando você faz push de uma tag de versão (ex.: v1.17.0).
+#
+# Pré-requisitos (uma vez):
+#  1. Crie o publisher "Valuor" em https://marketplace.visualstudio.com/manage
+#  2. Gere um Personal Access Token no Azure DevOps (escopo Marketplace > Manage)
+#  3. Cadastre-o como secret do repositório:
+#     Settings > Secrets and variables > Actions > New repository secret
+#     Name: VSCE_PAT   Value: <seu token>
+#
+# Para publicar, basta:
+#     npm version 1.17.1   # ou edite a version no package.json e crie a tag
+#     git push --follow-tags
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # necessário para criar o GitHub Release
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Verificar tipos, lint e testes
+        run: |
+          npm run typecheck
+          npm run lint
+          npm test
+
+      - name: Empacotar VSIX
+        run: npx @vscode/vsce package --allow-star-activation -o valuor-sftp-${{ github.ref_name }}.vsix
+
+      - name: Publicar no VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx @vscode/vsce publish --packagePath valuor-sftp-${{ github.ref_name }}.vsix
+
+      # Opcional: publicar também no Open VSX (VSCodium, Cursor, Gitpod, etc.).
+      # Cadastre o secret OVSX_PAT (https://open-vsx.org) e descomente:
+      # - name: Publicar no Open VSX
+      #   env:
+      #     OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      #   run: npx ovsx publish valuor-sftp-${{ github.ref_name }}.vsix
+
+      - name: Criar GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: valuor-sftp-${{ github.ref_name }}.vsix
+          generate_release_notes: true

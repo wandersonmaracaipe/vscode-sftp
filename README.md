@@ -3,7 +3,7 @@
 Mantido pela **Valuor**. <br>
 Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp), que por sua vez é um fork do [plugin SFTP original do liximomo](https://github.com/liximomo/vscode-sftp.git) (não mais mantido). Todo o crédito aos autores originais.
 
-- Marketplace do VS Code: https://marketplace.visualstudio.com/items?itemName=valuor.valuor-sftp <br>
+- Marketplace do VS Code: https://marketplace.visualstudio.com/items?itemName=Valuor.valuor-sftp <br>
 - Código-fonte e releases: https://github.com/wandersonmaracaipe/vscode-sftp
 
 ✳ Contribuições são bem-vindas — abra uma _issue_ ou um _pull request_ no [repositório](https://github.com/wandersonmaracaipe/vscode-sftp).
@@ -46,7 +46,7 @@ O Valuor SFTP permite adicionar, editar ou excluir arquivos em um diretório loc
 ### Método 1 (Recomendado: atualização automática)
 1. Abra as Extensões (Ctrl + Shift + X).
 2. Desinstale qualquer outra extensão sftp que você tenha instalado.
-3. Instale esta extensão diretamente pelo Marketplace do VS Code: https://marketplace.visualstudio.com/items?itemName=valuor.valuor-sftp.
+3. Instale esta extensão diretamente pelo Marketplace do VS Code: https://marketplace.visualstudio.com/items?itemName=Valuor.valuor-sftp.
 4. Pronto!
 
 ### Método 2 (Instalação manual via VSIX)
