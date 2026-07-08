@@ -33,5 +33,11 @@ jobs:
       - name: Testes
         run: npm test
 
+      - name: Instalar servidor FTP de teste (para os testes de integração)
+        run: npm i --no-save ftp-srv@^4.6.3
+
+      - name: Testes de integração (SFTP/FTP)
+        run: npm run test:integration
+
       - name: Compilar (build de produção)
         run: npm run compile

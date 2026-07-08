@@ -1,4 +1,4 @@
-import * as PQueue from 'p-queue';
+import PQueue = require('p-queue');
 import { PassThrough, Readable } from 'stream';
 import { Client, FileInfo, FileType as FtpFileType } from 'basic-ftp';
 import logger from '../../logger';
