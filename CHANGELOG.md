@@ -10,6 +10,11 @@ Modernization release under the **Valuor** fork (based on [Natizyskunk/vscode-sf
   * "Config Not Found" on save/upload no longer happens when VS Code reports the file path with different casing than the configured base path — the service lookup is now case-insensitive on Windows (upstream issue #428).
   * Creating a file through the Remote Explorer now asks for confirmation before overwriting an existing remote file instead of silently truncating it (upstream issue #228).
   * Remote symbolic links that point to directories are now navigable in the Remote Explorer over SFTP (upstream issue #177).
+* **New features**:
+  * Deleting remote items now asks for confirmation through a modal warning dialog (instead of an easy-to-miss notification), and summarizes multi-select deletes.
+  * New **"SFTP: Toggle Upload On Save"** command to pause/resume config-driven upload-on-save at runtime, without editing `sftp.json`.
+  * The SFTP status-bar item is now a connection/health indicator (a server icon when ready, an error icon when a connection fails).
+  * Multi-file uploads/downloads/syncs show a cancellable progress notification (done/total + current file). Single-file transfers stay on the status-bar spinner.
 * **Rebrand**: published as **Valuor SFTP** under the `valuor` publisher. Full credit to the original and upstream authors.
 
 ## 1.16.3 - 2023-06-16
