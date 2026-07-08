@@ -104,6 +104,16 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.savePassword",
+        "title": "Salvar Senha no Cofre",
+        "category": "SFTP"
+      },
+      {
+        "command": "sftp.clearPassword",
+        "title": "Remover Senha do Cofre",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.upload.file",
         "title": "Enviar Arquivo",
         "category": "SFTP"
@@ -323,6 +333,14 @@
         },
         {
           "command": "sftp.testConnection",
+          "when": "sftp.enabled"
+        },
+        {
+          "command": "sftp.savePassword",
+          "when": "sftp.enabled"
+        },
+        {
+          "command": "sftp.clearPassword",
           "when": "sftp.enabled"
         },
         {

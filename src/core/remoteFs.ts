@@ -3,6 +3,7 @@ import { promptForPassword } from '../host';
 import logger from '../logger';
 import app from '../app';
 import StatusBarItem from '../ui/statusBarItem';
+import { getStoredPassword } from '../modules/secretStorage';
 import { ConnectOption } from './remote-client/remoteClient';
 import {
   FileSystem,
@@ -81,7 +82,14 @@ class KeepAliveRemoteFs {
     app.sftpBarItem.showMsg('conectando...', connectOption.connectTimeout);
     this.pendingPromise = this.fs
       .connect(connectOption, {
-        askForPasswd: promptForPassword,
+        // Prefer a password saved in the OS keychain; fall back to prompting.
+        askForPasswd: async (msg: string) => {
+          const saved = await getStoredPassword(connectOption);
+          if (saved !== undefined) {
+            return saved;
+          }
+          return promptForPassword(msg);
+        },
       })
       .then(
         () => {
