@@ -1,18 +1,31 @@
 import * as vscode from 'vscode';
 import { refreshRemoteExplorer } from '../shared';
-import { upath, FileService, TransferScheduler } from '../../core';
+import { FileService, TransferScheduler } from '../../core';
 import createFileHandler, { FileHandlerContext } from '../createFileHandler';
 import { transfer, sync, TransferOption, SyncOption, TransferDirection } from './transfer';
 
+function formatBytes(n: number): string {
+  if (!n || n < 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let value = n;
+  let i = 0;
+  while (value >= 1024 && i < units.length - 1) {
+    value /= 1024;
+    i += 1;
+  }
+  return `${value.toFixed(i === 0 || value >= 100 ? 0 : 1)} ${units[i]}`;
+}
+
 // Runs a collected transfer scheduler, surfacing a cancellable progress
-// notification for multi-file operations. Single-file transfers (including
-// upload-on-save) keep relying on the status-bar spinner to avoid popping a
-// notification on every save. Byte-level counting is intentionally avoided so
-// the transfer stream pipeline stays untouched; progress is by file count.
+// notification for multi-file operations. The bar advances by file count; when a
+// byte accumulator is provided it also shows the transferred size and the
+// current speed. Single-file transfers (including upload-on-save) keep relying
+// on the status-bar spinner to avoid popping a notification on every save.
 async function runSchedulerWithProgress(
   scheduler: TransferScheduler,
   fileService: FileService,
-  title: string
+  title: string,
+  bytes?: { transferred: number }
 ) {
   const total = scheduler.size;
   if (total <= 1) {
@@ -28,18 +41,32 @@ async function runSchedulerWithProgress(
     },
     async (progress, token) => {
       let done = 0;
-      progress.report({ message: `0/${total}` });
-      const unsubscribe = fileService.afterTransfer((_err, task) => {
+      const startedAt = Date.now();
+      const render = () => {
+        const parts = [`${done}/${total}`];
+        if (bytes && bytes.transferred > 0) {
+          const elapsed = (Date.now() - startedAt) / 1000;
+          const speed = elapsed > 0 ? bytes.transferred / elapsed : 0;
+          parts.push(formatBytes(bytes.transferred));
+          parts.push(`${formatBytes(speed)}/s`);
+        }
+        progress.report({ message: parts.join(' · ') });
+      };
+
+      render();
+      const timer = bytes ? setInterval(render, 500) : undefined;
+      const unsubscribe = fileService.afterTransfer(() => {
         done += 1;
-        progress.report({
-          increment: 100 / total,
-          message: `${done}/${total} — ${upath.basename(task.localFsPath)}`,
-        });
+        progress.report({ increment: 100 / total });
+        render();
       });
       token.onCancellationRequested(() => fileService.cancelTransferTasks());
       try {
         await scheduler.run();
       } finally {
+        if (timer) {
+          clearInterval(timer);
+        }
         unsubscribe();
       }
     }
@@ -75,11 +102,15 @@ function createTransferHandle(direction: TransferDirection) {
         transferDirection: TransferDirection.LOCAL_TO_REMOTE,
       };
     }
+    const bytes = { transferred: 0 };
+    option.onProgress = (delta: number) => {
+      bytes.transferred += delta;
+    };
     // todo: abort at here. we should stop collect task
     await transfer(transferConfig, t => scheduler.add(t));
     const title =
       direction === TransferDirection.LOCAL_TO_REMOTE ? 'SFTP: Enviando' : 'SFTP: Baixando';
-    await runSchedulerWithProgress(scheduler, this.fileService, title);
+    await runSchedulerWithProgress(scheduler, this.fileService, title, bytes);
   };
 }
 
@@ -96,6 +127,10 @@ export const sync2Remote = createFileHandler<SyncOption>({
     // Attach filePerm and dirPerm to transferOption
     option.filePerm = this.config.filePerm;
     option.dirPerm = this.config.dirPerm;
+    const bytes = { transferred: 0 };
+    option.onProgress = (delta: number) => {
+      bytes.transferred += delta;
+    };
     await sync(
       {
         srcFsPath: localFsPath,
@@ -107,7 +142,12 @@ export const sync2Remote = createFileHandler<SyncOption>({
       },
       t => scheduler.add(t)
     );
-    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Sincronizando local ➞ remoto');
+    await runSchedulerWithProgress(
+      scheduler,
+      this.fileService,
+      'SFTP: Sincronizando local ➞ remoto',
+      bytes
+    );
   },
   transformOption() {
     const config = this.config;
@@ -136,6 +176,10 @@ export const sync2Local = createFileHandler<SyncOption>({
     const localFs = this.fileService.getLocalFileSystem();
     const { localFsPath, remoteFsPath } = this.target;
     const scheduler = this.fileService.createTransferScheduler(this.config.concurrency);
+    const bytes = { transferred: 0 };
+    option.onProgress = (delta: number) => {
+      bytes.transferred += delta;
+    };
     await sync(
       {
         srcFsPath: remoteFsPath,
@@ -147,7 +191,12 @@ export const sync2Local = createFileHandler<SyncOption>({
       },
       t => scheduler.add(t)
     );
-    await runSchedulerWithProgress(scheduler, this.fileService, 'SFTP: Sincronizando remoto ➞ local');
+    await runSchedulerWithProgress(
+      scheduler,
+      this.fileService,
+      'SFTP: Sincronizando remoto ➞ local',
+      bytes
+    );
   },
   transformOption() {
     const config = this.config;

@@ -1,4 +1,4 @@
-import { Readable } from 'stream';
+import { Readable, Transform } from 'stream';
 import * as fileOperations from './fileBaseOperations';
 import { FileSystem, FileType } from './fs';
 import { Task } from './scheduler';
@@ -26,6 +26,8 @@ export interface TransferOption {
   perserveTargetMode: boolean;
   useTempFile?: boolean;
   openSsh?: boolean;
+  // Called with the number of bytes as they stream through the transfer.
+  onProgress?: (bytesDelta: number) => void;
 }
 
 export default class TransferTask implements Task {
@@ -174,7 +176,25 @@ export default class TransferTask implements Task {
       if (useTempFile) {
         logger.info("uploading temp file: " + uploadTarget);
       }
-      await targetFs.put(this._handle, uploadTarget, {
+
+      // When a progress callback is provided, stream through a byte counter so
+      // the UI can show transferred bytes/speed. The Transform passes chunks
+      // through untouched, so the transfer itself is unaffected.
+      let putInput: Readable = this._handle;
+      const onProgress = this._TransferOption.onProgress;
+      if (onProgress) {
+        const counter = new Transform({
+          transform(chunk, _enc, cb) {
+            onProgress(chunk.length);
+            cb(null, chunk);
+          },
+        });
+        this._handle.once('error', err => counter.destroy(err));
+        this._handle.pipe(counter);
+        putInput = counter;
+      }
+
+      await targetFs.put(putInput, uploadTarget, {
         mode,
         fd: uploadFd,
         autoClose: false,
