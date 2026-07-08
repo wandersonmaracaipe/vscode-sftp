@@ -50,6 +50,7 @@ interface ServiceOption {
   };
   ignore: string[];
   ignoreFile: string;
+  useGitignore?: boolean;
   remoteExplorer: {
     filesExclude?: string[];
     order: number;
@@ -119,10 +120,25 @@ type ConfigValidator = (x: any) => { message: string } | undefined;
 
 const DEFAULT_SSHCONFIG_FILE = '~/.ssh/config';
 
-function filesIgnoredFromConfig(config: FileServiceConfig): string[] {
+function filesIgnoredFromConfig(config: FileServiceConfig, baseDir?: string): string[] {
   const cache = app.fsCache;
-  const ignore: string[] =
+  let ignore: string[] =
     config.ignore && config.ignore.length ? config.ignore : [];
+
+  // Optionally merge the project's own .gitignore patterns.
+  if (config.useGitignore && baseDir) {
+    const gitignorePath = path.join(baseDir, '.gitignore');
+    let gitignoreContent;
+    if (cache.has(gitignorePath)) {
+      gitignoreContent = cache.get(gitignorePath);
+    } else if (fs.existsSync(gitignorePath)) {
+      gitignoreContent = fs.readFileSync(gitignorePath).toString();
+      cache.set(gitignorePath, gitignoreContent);
+    }
+    if (gitignoreContent) {
+      ignore = ignore.concat(gitignoreContent.split(/\r?\n/g));
+    }
+  }
 
   const ignoreFile = config.ignoreFile;
   if (!ignoreFile) {
@@ -154,6 +170,7 @@ function getHostInfo(config) {
     'downloadOnOpen',
     'ignore',
     'ignoreFile',
+    'useGitignore',
     'watcher',
     'concurrency',
     'syncOption',
@@ -594,7 +611,7 @@ export default class FileService {
     const localContext = this.baseDir;
     const remoteContext = config.remotePath;
 
-    const ignoreConfig = filesIgnoredFromConfig(config);
+    const ignoreConfig = filesIgnoredFromConfig(config, this.baseDir);
     if (ignoreConfig.length <= 0) {
       return null;
     }

@@ -110,6 +110,11 @@
         "description": "Absolute path to the ignore file or Relative path relative to the workspace root folder.",
         "default": ".gitignore"
       },
+      "useGitignore": {
+        "type": "boolean",
+        "description": "Also use the project's .gitignore patterns as ignore rules.",
+        "default": false
+      },
       "remoteExplorer": {
         "type": "object",
         "description": "Remote Explorer Setting.",
