@@ -1,7 +1,9 @@
 import * as Client from 'ftp';
 import RemoteClient, { ConnectOption } from './remoteClient';
 
-// tslint:disable
+// This block mirrors the internals of the `ftp` package to patch `_send`;
+// keep the original style so it stays diffable against the upstream source.
+// (lint rules for this adapter file are relaxed in eslint.config.js)
 Client.prototype._send = function(cmd: string, cb: (err: Error) => void, promote: boolean) {
   clearTimeout(this._keepalive);
   if (cmd !== undefined) {
@@ -24,7 +26,6 @@ Client.prototype._send = function(cmd: string, cb: (err: Error) => void, promote
     }
   } else if (!this._curReq && !queueLen && this._ending) this._reset();
 };
-// tslint:enable
 
 Client.prototype.setLastMod = function(path: string, date: Date, cb) {
   const dateStr =
