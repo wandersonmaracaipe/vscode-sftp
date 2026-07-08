@@ -211,7 +211,15 @@ export default class TransferTask implements Task {
       }
 
     } finally {
-      await targetFs.close(uploadFd);
+      try {
+        await targetFs.close(uploadFd);
+      } catch (error) {
+        // The transfer itself already completed (the write stream emitted
+        // 'finish' and any rename is done). The descriptor may have been
+        // released by the underlying stream already, so a failing close here
+        // must not turn a successful transfer into a failed one.
+        logger.debug(`close descriptor after transfer failed: ${error.message}`);
+      }
     }
   }
 }
