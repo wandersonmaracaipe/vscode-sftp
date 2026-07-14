@@ -26,6 +26,8 @@ export interface TransferOption {
   perserveTargetMode: boolean;
   useTempFile?: boolean;
   openSsh?: boolean;
+  // Source file size in bytes, when known (used for determinate progress).
+  size?: number;
   // Called with the number of bytes as they stream through the transfer.
   onProgress?: (bytesDelta: number) => void;
 }
@@ -78,6 +80,10 @@ export default class TransferTask implements Task {
 
   get transferType() {
     return this._transferDirection;
+  }
+
+  get fileSize(): number {
+    return this._TransferOption.size || 0;
   }
 
   async run() {

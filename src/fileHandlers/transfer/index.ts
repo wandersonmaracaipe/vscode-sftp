@@ -16,16 +16,30 @@ function formatBytes(n: number): string {
   return `${value.toFixed(i === 0 || value >= 100 ? 0 : 1)} ${units[i]}`;
 }
 
+function formatEta(seconds: number): string {
+  if (!isFinite(seconds) || seconds <= 0) return '';
+  const s = Math.round(seconds);
+  if (s < 60) return `${s}s restantes`;
+  const m = Math.floor(s / 60);
+  if (m < 60) {
+    const rs = s % 60;
+    return `${m}m${rs ? ' ' + rs + 's' : ''} restantes`;
+  }
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m restantes`;
+}
+
 // Runs a collected transfer scheduler, surfacing a cancellable progress
-// notification for multi-file operations. The bar advances by file count; when a
-// byte accumulator is provided it also shows the transferred size and the
-// current speed. Single-file transfers (including upload-on-save) keep relying
-// on the status-bar spinner to avoid popping a notification on every save.
+// notification for multi-file operations. When the total byte size is known the
+// bar is determinate by bytes and shows size/speed/ETA; otherwise it advances by
+// file count. Single-file transfers (including upload-on-save) keep relying on
+// the status-bar spinner to avoid popping a notification on every save.
 async function runSchedulerWithProgress(
   scheduler: TransferScheduler,
   fileService: FileService,
   title: string,
-  bytes?: { transferred: number }
+  bytes?: { transferred: number },
+  totalBytes = 0
 ) {
   const total = scheduler.size;
   if (total <= 1) {
@@ -42,22 +56,39 @@ async function runSchedulerWithProgress(
     async (progress, token) => {
       let done = 0;
       const startedAt = Date.now();
+      const determinate = !!bytes && totalBytes > 0;
+      let lastReportedBytes = 0;
+
       const render = () => {
-        const parts = [`${done}/${total}`];
-        if (bytes && bytes.transferred > 0) {
-          const elapsed = (Date.now() - startedAt) / 1000;
-          const speed = elapsed > 0 ? bytes.transferred / elapsed : 0;
-          parts.push(formatBytes(bytes.transferred));
-          parts.push(`${formatBytes(speed)}/s`);
+        const elapsed = (Date.now() - startedAt) / 1000;
+        if (determinate) {
+          const transferred = Math.min(bytes!.transferred, totalBytes);
+          const increment = ((transferred - lastReportedBytes) / totalBytes) * 100;
+          lastReportedBytes = transferred;
+          const speed = elapsed > 0 ? transferred / elapsed : 0;
+          const remaining = speed > 0 ? (totalBytes - transferred) / speed : 0;
+          const parts = [`${done}/${total}`, `${formatBytes(transferred)} / ${formatBytes(totalBytes)}`];
+          if (speed > 0) parts.push(`${formatBytes(speed)}/s`);
+          if (remaining > 0) parts.push(formatEta(remaining));
+          progress.report({ increment, message: parts.join(' · ') });
+        } else {
+          const parts = [`${done}/${total}`];
+          if (bytes && bytes.transferred > 0) {
+            const speed = elapsed > 0 ? bytes.transferred / elapsed : 0;
+            parts.push(formatBytes(bytes.transferred));
+            parts.push(`${formatBytes(speed)}/s`);
+          }
+          progress.report({ message: parts.join(' · ') });
         }
-        progress.report({ message: parts.join(' · ') });
       };
 
       render();
       const timer = bytes ? setInterval(render, 500) : undefined;
       const unsubscribe = fileService.afterTransfer(() => {
         done += 1;
-        progress.report({ increment: 100 / total });
+        if (!determinate) {
+          progress.report({ increment: 100 / total });
+        }
         render();
       });
       token.onCancellationRequested(() => fileService.cancelTransferTasks());
@@ -66,6 +97,13 @@ async function runSchedulerWithProgress(
       } finally {
         if (timer) {
           clearInterval(timer);
+        }
+        // Land the determinate bar on 100%.
+        if (determinate) {
+          const remainingPct = 100 - (lastReportedBytes / totalBytes) * 100;
+          if (remainingPct > 0) {
+            progress.report({ increment: remainingPct });
+          }
         }
         unsubscribe();
       }
@@ -103,14 +141,18 @@ function createTransferHandle(direction: TransferDirection) {
       };
     }
     const bytes = { transferred: 0 };
+    let totalBytes = 0;
     option.onProgress = (delta: number) => {
       bytes.transferred += delta;
     };
     // todo: abort at here. we should stop collect task
-    await transfer(transferConfig, t => scheduler.add(t));
+    await transfer(transferConfig, t => {
+      totalBytes += t.fileSize;
+      scheduler.add(t);
+    });
     const title =
       direction === TransferDirection.LOCAL_TO_REMOTE ? 'SFTP: Enviando' : 'SFTP: Baixando';
-    await runSchedulerWithProgress(scheduler, this.fileService, title, bytes);
+    await runSchedulerWithProgress(scheduler, this.fileService, title, bytes, totalBytes);
   };
 }
 
@@ -128,6 +170,7 @@ export const sync2Remote = createFileHandler<SyncOption>({
     option.filePerm = this.config.filePerm;
     option.dirPerm = this.config.dirPerm;
     const bytes = { transferred: 0 };
+    let totalBytes = 0;
     option.onProgress = (delta: number) => {
       bytes.transferred += delta;
     };
@@ -140,13 +183,17 @@ export const sync2Remote = createFileHandler<SyncOption>({
         transferOption: option,
         transferDirection: TransferDirection.LOCAL_TO_REMOTE,
       },
-      t => scheduler.add(t)
+      t => {
+        totalBytes += t.fileSize;
+        scheduler.add(t);
+      }
     );
     await runSchedulerWithProgress(
       scheduler,
       this.fileService,
       'SFTP: Sincronizando local ➞ remoto',
-      bytes
+      bytes,
+      totalBytes
     );
   },
   transformOption() {
@@ -177,6 +224,7 @@ export const sync2Local = createFileHandler<SyncOption>({
     const { localFsPath, remoteFsPath } = this.target;
     const scheduler = this.fileService.createTransferScheduler(this.config.concurrency);
     const bytes = { transferred: 0 };
+    let totalBytes = 0;
     option.onProgress = (delta: number) => {
       bytes.transferred += delta;
     };
@@ -189,13 +237,17 @@ export const sync2Local = createFileHandler<SyncOption>({
         transferOption: option,
         transferDirection: TransferDirection.REMOTE_TO_LOCAL,
       },
-      t => scheduler.add(t)
+      t => {
+        totalBytes += t.fileSize;
+        scheduler.add(t);
+      }
     );
     await runSchedulerWithProgress(
       scheduler,
       this.fileService,
       'SFTP: Sincronizando remoto ➞ local',
-      bytes
+      bytes,
+      totalBytes
     );
   },
   transformOption() {
