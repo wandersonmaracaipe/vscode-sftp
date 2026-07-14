@@ -11,6 +11,11 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
+**Novidades da 1.21.1:**
+- **Correção crítica no _watcher_** — o envio automático não consultava as regras de `ignore` antes de enfileirar arquivos: pastas como `node_modules` eram enviadas e um arquivo temporário que sumia no meio da transferência (por exemplo, durante um `npm install`) derrubava a conexão FTP, gerando uma cascata de erros _"Client is closed"_. Agora o `ignore` é respeitado tanto no envio quanto na exclusão.
+- **Padrão de `ignore` mais seguro** — quando você **não** define `ignore` no `sftp.json`, o padrão passa a ser `[".vscode", ".git", ".DS_Store", "node_modules"]` (antes era vazio), evitando sincronizar pastas pesadas ou transitórias por acidente. Definir a sua própria lista continua **substituindo** o padrão.
+- **Resiliência a arquivos transitórios** — arquivos que deixam de existir entre o evento do sistema de arquivos e o envio são ignorados, em vez de falharem no meio da transferência e encerrarem a conexão.
+
 **Novidades da 1.21.0:**
 - **Preview de Sincronização (dry-run)** — veja o que será enviado/excluído antes de aplicar.
 - **Aviso de conflito** (`warnRemoteNewer`) ao enviar por cima de um arquivo remoto mais recente.
