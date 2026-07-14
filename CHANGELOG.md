@@ -1,3 +1,10 @@
+## 1.21.1 - 2026-07-14
+Correção de estabilidade no observador de arquivos (auto-upload).
+
+* **Correção crítica**: o observador (`watcher`) não consultava o `ignore` antes de enfileirar arquivos — pastas como `node_modules` eram enviadas, e um arquivo temporário que sumia no meio da transferência (ex.: durante um `npm install`) derrubava a conexão FTP, disparando uma cascata de erros "Client is closed". O observador agora respeita as regras de `ignore` (upload **e** delete) antes de enfileirar.
+* **Padrão de `ignore` sensato**: quando nenhum `ignore` é definido no `sftp.json`, agora usa `['.vscode', '.git', '.DS_Store', 'node_modules']` por padrão, evitando sincronizar pastas pesadas/transitórias por acidente. (Defina o seu próprio `ignore` para substituir a lista.)
+* **Resiliência a arquivos transitórios**: o observador ignora arquivos que deixaram de existir entre o evento e o envio, em vez de deixar a leitura falhar no meio da transferência e encerrar a conexão.
+
 ## 1.21.0 - 2026-07-08
 Sincronização inteligente e produtividade no Remote Explorer.
 
