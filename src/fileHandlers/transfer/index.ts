@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { refreshRemoteExplorer } from '../shared';
-import { upath, FileService, TransferScheduler, TransferTask } from '../../core';
+import { upath, FileService, FileType, TransferScheduler, TransferTask } from '../../core';
+import { showConfirmMessage } from '../../host';
 import createFileHandler, { FileHandlerContext } from '../createFileHandler';
 import { transfer, sync, TransferOption, SyncOption, TransferDirection } from './transfer';
 
@@ -158,6 +159,40 @@ function createTransferHandle(direction: TransferDirection) {
 
 const uploadHandle = createTransferHandle(TransferDirection.LOCAL_TO_REMOTE);
 const downloadHandle = createTransferHandle(TransferDirection.REMOTE_TO_LOCAL);
+
+// Single-file upload with an optional "remote is newer" conflict warning
+// (enabled per-config via `warnRemoteNewer`).
+async function uploadFileHandle(this: FileHandlerContext, option) {
+  if (this.config.warnRemoteNewer) {
+    const remoteFs = await this.fileService.getRemoteFileSystem(this.config);
+    const localFs = this.fileService.getLocalFileSystem();
+    const { localFsPath, remoteFsPath } = this.target;
+
+    let remoteStat;
+    try {
+      remoteStat = await remoteFs.lstat(remoteFsPath);
+    } catch {
+      remoteStat = undefined; // remote file doesn't exist — no conflict
+    }
+
+    if (remoteStat && remoteStat.type === FileType.File) {
+      const localStat = await localFs.lstat(localFsPath);
+      // Remote mtime is already normalized to local time by the FileSystem.
+      if (Math.floor(remoteStat.mtime / 1000) > Math.floor(localStat.mtime / 1000)) {
+        const overwrite = await showConfirmMessage(
+          `O arquivo remoto "${upath.basename(remoteFsPath)}" é mais recente que o local. Enviar mesmo assim?`,
+          'Enviar',
+          'Cancelar'
+        );
+        if (!overwrite) {
+          return;
+        }
+      }
+    }
+  }
+
+  return uploadHandle.call(this, option);
+}
 
 export const sync2Remote = createFileHandler<SyncOption>({
   name: 'sync local ➞ remote',
@@ -380,7 +415,7 @@ export const upload = createFileHandler<TransferOption>({
 
 export const uploadFile = createFileHandler<TransferOption>({
   name: 'upload file',
-  handle: uploadHandle,
+  handle: uploadFileHandle,
   transformOption() {
     const config = this.config;
     return {

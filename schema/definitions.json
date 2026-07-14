@@ -115,6 +115,11 @@
         "description": "Also use the project's .gitignore patterns as ignore rules.",
         "default": false
       },
+      "warnRemoteNewer": {
+        "type": "boolean",
+        "description": "Warn before uploading a single file when the remote copy is newer than the local one.",
+        "default": false
+      },
       "remoteExplorer": {
         "type": "object",
         "description": "Remote Explorer Setting.",

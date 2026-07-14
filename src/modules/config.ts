@@ -47,6 +47,7 @@ const configScheme = Joi.object({
     .items(Joi.string()),
   ignoreFile: Joi.string(),
   useGitignore: Joi.boolean(),
+  warnRemoteNewer: Joi.boolean(),
   watcher: {
     files: Joi.string().allow(false, null),
     autoUpload: Joi.boolean(),

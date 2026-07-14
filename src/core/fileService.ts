@@ -51,6 +51,7 @@ interface ServiceOption {
   ignore: string[];
   ignoreFile: string;
   useGitignore?: boolean;
+  warnRemoteNewer?: boolean;
   remoteExplorer: {
     filesExclude?: string[];
     order: number;
@@ -171,6 +172,7 @@ function getHostInfo(config) {
     'ignore',
     'ignoreFile',
     'useGitignore',
+    'warnRemoteNewer',
     'watcher',
     'concurrency',
     'syncOption',
