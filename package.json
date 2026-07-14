@@ -266,6 +266,11 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.rename",
+        "title": "Renomear / Mover",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.create.folder",
         "title": "Criar Pasta",
         "category": "SFTP"
@@ -453,6 +458,10 @@
         },
         {
           "command": "sftp.delete.remote",
+          "when": "false"
+        },
+        {
+          "command": "sftp.rename",
           "when": "false"
         },
         {
@@ -653,6 +662,11 @@
         },
         {
           "command": "sftp.delete.remote",
+          "group": "7_modification",
+          "when": "view == remoteExplorer && viewItem != root"
+        },
+        {
+          "command": "sftp.rename",
           "group": "7_modification",
           "when": "view == remoteExplorer && viewItem != root"
         },
