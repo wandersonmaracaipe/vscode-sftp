@@ -301,11 +301,12 @@ Faz upload de um arquivo temporário a cada operação de salvamento do VSCode p
 
 ### ignore
 O ignore pode ser usado para ignorar arquivos e pastas na sincronização e ainda suporta curingas usando `*`. <br>
-Este é o mesmo comportamento do gitignore, com todos os caminhos relativos ao context da configuração atual.
- 
+Este é o mesmo comportamento do gitignore, com todos os caminhos relativos ao context da configuração atual. <br>
+Quando você **não** define `ignore`, um padrão sensato é aplicado para evitar sincronizar pastas pesadas/transitórias por acidente. Definir a sua própria lista **substitui** o padrão (não é mesclado).
+
 | Chave | Valor | Padrão |
 | --- | --- | --- |
-| *ignore* | *string[]* | `[]` |
+| *ignore* | *string[]* | `['.vscode', '.git', '.DS_Store', 'node_modules']` |
  
 ```json
 {

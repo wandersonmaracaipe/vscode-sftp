@@ -79,7 +79,9 @@ const defaultConfig = {
   useTempFile: false,
   openSsh: false,
   downloadOnOpen: false,
-  ignore: [],
+  // Sensible defaults so heavy/transient folders aren't synced by accident.
+  // (Set your own `ignore` in sftp.json to override this list.)
+  ignore: ['.vscode', '.git', '.DS_Store', 'node_modules'],
   // ignoreFile: undefined,
   // watcher: {
   //   files: false,

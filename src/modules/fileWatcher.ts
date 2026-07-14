@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { existsSync } from 'fs';
 import debounce = require('lodash.debounce');
 import logger from '../logger';
 import { isValidFile, fileDepth } from '../helper';
@@ -6,7 +7,24 @@ import { upload, removeRemote } from '../fileHandlers';
 import { WatcherService, TransferDirection } from '../core';
 import app from '../app';
 import StatusBarItem from '../ui/statusBarItem';
-import { getRunningTransformTasks } from './serviceManager';
+import { getRunningTransformTasks, getFileService } from './serviceManager';
+
+// Whether the watcher should skip this file because the resolved config ignores
+// it. Applying the ignore rules here (not just at transfer time) keeps the queue
+// clean and, importantly, avoids trying to upload transient files under folders
+// like node_modules — which vanish mid-transfer and drop the connection.
+function isIgnored(uri: vscode.Uri): boolean {
+  try {
+    const fileService = getFileService(uri);
+    if (!fileService) {
+      return false;
+    }
+    const config = fileService.getConfig();
+    return typeof config.ignore === 'function' && config.ignore(uri.fsPath);
+  } catch {
+    return false;
+  }
+}
 
 const watchers: {
   [x: string]: vscode.FileSystemWatcher;
@@ -33,6 +51,13 @@ function doUpload() {
     }
 
     const fspath = uri.fsPath;
+    // The file may have vanished between the fs event and now (common with
+    // transient/temp files). Skip it instead of letting the read fail
+    // mid-transfer and tear down the connection.
+    if (!existsSync(fspath)) {
+      return;
+    }
+
     logger.info(`[watcher/updated] ${fspath}`);
     try {
       await upload(uri);
@@ -62,7 +87,7 @@ const debouncedUpload = debounce(doUpload, ACTION_INTEVAL, { leading: true, trai
 const debouncedDelete = debounce(doDelete, ACTION_INTEVAL, { leading: true, trailing: true });
 
 function uploadHandler(uri: vscode.Uri) {
-  if (!isValidFile(uri)) {
+  if (!isValidFile(uri) || isIgnored(uri)) {
     return;
   }
 
@@ -113,7 +138,7 @@ function createWatcher(
 
   if (watcherConfig.autoDelete) {
     watcher.onDidDelete(uri => {
-      if (!isValidFile(uri)) {
+      if (!isValidFile(uri) || isIgnored(uri)) {
         return;
       }
 

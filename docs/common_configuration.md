@@ -239,11 +239,12 @@ Atualiza o destino apenas se houver uma versão mais recente no sistema de arqui
 
 ### ignore
 Ignore pode ser usado para ignorar arquivos e pastas na sincronização, e até suporta curingas usando `*`. <br>
-Este é o mesmo comportamento do gitignore, todos os caminhos relativos ao context da configuração atual.
- 
+Este é o mesmo comportamento do gitignore, todos os caminhos relativos ao context da configuração atual. <br>
+Quando você **não** define `ignore`, um padrão sensato é aplicado para evitar sincronizar pastas pesadas/transitórias por acidente. Definir a sua própria lista **substitui** o padrão (não é mesclado).
+
 | Key | Value | Default |
 | --- | --- | --- |
-| *ignore* | *string[]* | `[]` |
+| *ignore* | *string[]* | `['.vscode', '.git', '.DS_Store', 'node_modules']` |
  
 ```json
 {
