@@ -7,6 +7,7 @@ import { UResource, FileService, TransferTask } from '../../core';
 import { validateConfig } from '../config';
 import watcherService from '../fileWatcher';
 import { renderTransferCount } from '../transferStatusBar';
+import { recordTransfer, TransferOutcome } from '../transferHistory';
 import Trie from './trie';
 
 const WIN_DRIVE_REGEX = /^([a-zA-Z]):/;
@@ -127,14 +128,17 @@ export function createFileService(config: any, workspace: string) {
     if (task.isCancelled()) {
       logger.info(`cancel transfer ${localFsPath}`);
       app.sftpBarItem.showMsg(`cancelado ${filename}`, filepath, 2000 * 2);
+      recordTransfer(localFsPath, transferType, TransferOutcome.Cancelled);
     } else if (error) {
       // if ((error as any).reported !== true) {
       reportError(error, `when ${transferType} ${localFsPath}`);
       // }
       app.sftpBarItem.showMsg(`falhou ${filename}`, filepath, 2000 * 2);
+      recordTransfer(localFsPath, transferType, TransferOutcome.Failed, error && error.message);
     } else {
       logger.info(`${transferType} ${localFsPath}`);
       app.sftpBarItem.showMsg(`concluído ${filename}`, filepath, 2000 * 2);
+      recordTransfer(localFsPath, transferType, TransferOutcome.Success);
     }
   });
 

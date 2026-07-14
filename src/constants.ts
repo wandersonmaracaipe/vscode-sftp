@@ -63,6 +63,11 @@ export const COMMAND_RENAME_REMOTE = 'sftp.rename';
 export const COMMAND_REVEAL_IN_EXPLORER = 'sftp.revealInExplorer';
 export const COMMAND_REVEAL_IN_REMOTE_EXPLORER = 'sftp.revealInRemoteExplorer';
 
+export const COMMAND_TRANSFERHISTORY_RETRY = 'sftp.transferHistory.retry';
+export const COMMAND_TRANSFERHISTORY_RETRY_ALL_FAILED = 'sftp.transferHistory.retryAllFailed';
+export const COMMAND_TRANSFERHISTORY_CLEAR = 'sftp.transferHistory.clear';
+export const COMMAND_TRANSFERHISTORY_REVEAL = 'sftp.transferHistory.reveal';
+
 export const COMMAND_REMOTEEXPLORER_REFRESH = 'sftp.remoteExplorer.refresh';
 export const COMMAND_REMOTEEXPLORER_REFRESH_ACTIVE_FILE = "sftp.remoteExplorer.refreshActiveFile"
 export const COMMAND_REMOTEEXPLORER_EDITINLOCAL = 'sftp.remoteExplorer.editInLocal';

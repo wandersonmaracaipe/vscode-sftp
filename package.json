@@ -48,6 +48,12 @@
           "id": "remoteExplorer",
           "name": "Explorador",
           "when": "sftp.enabled"
+        },
+        {
+          "id": "transferHistory",
+          "name": "Histórico de Transferências",
+          "when": "sftp.enabled",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -91,6 +97,29 @@
       {
         "command": "sftp.cancelAllTransfer",
         "title": "Cancelar Todas as Transferências",
+        "category": "SFTP"
+      },
+      {
+        "command": "sftp.transferHistory.retry",
+        "title": "Repetir Transferência",
+        "category": "SFTP",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "sftp.transferHistory.retryAllFailed",
+        "title": "Repetir Todas as Falhas",
+        "category": "SFTP",
+        "icon": "$(debug-rerun)"
+      },
+      {
+        "command": "sftp.transferHistory.clear",
+        "title": "Limpar Histórico de Transferências",
+        "category": "SFTP",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "sftp.transferHistory.reveal",
+        "title": "Abrir Arquivo do Histórico",
         "category": "SFTP"
       },
       {
@@ -325,6 +354,22 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "sftp.transferHistory.retry",
+          "when": "false"
+        },
+        {
+          "command": "sftp.transferHistory.reveal",
+          "when": "false"
+        },
+        {
+          "command": "sftp.transferHistory.retryAllFailed",
+          "when": "sftp.enabled"
+        },
+        {
+          "command": "sftp.transferHistory.clear",
+          "when": "sftp.enabled"
+        },
         {
           "command": "sftp.setProfile",
           "when": "sftp.enabled"
@@ -618,9 +663,24 @@
           "command": "sftp.remoteExplorer.refresh",
           "when": "view == remoteExplorer",
           "group": "navigation"
+        },
+        {
+          "command": "sftp.transferHistory.retryAllFailed",
+          "when": "view == transferHistory",
+          "group": "navigation@1"
+        },
+        {
+          "command": "sftp.transferHistory.clear",
+          "when": "view == transferHistory",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
+        {
+          "command": "sftp.transferHistory.retry",
+          "group": "inline",
+          "when": "view == transferHistory && viewItem == failedTransfer"
+        },
         {
           "command": "sftp.openConnectInTerminal",
           "group": "navigation",

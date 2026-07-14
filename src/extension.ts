@@ -11,6 +11,7 @@ import { getAllFileService, createFileService, disposeFileService } from './modu
 import { getWorkspaceFolders, setContextValue } from './host';
 import { initSecretStorage } from './modules/secretStorage';
 import { initTransferStatusBar } from './modules/transferStatusBar';
+import { initTransferHistory } from './modules/transferHistory';
 import RemoteExplorer from './modules/remoteExplorer';
 
 async function setupWorkspaceFolder(dir) {
@@ -32,6 +33,7 @@ function setup(workspaceFolders: readonly vscode.WorkspaceFolder[]) {
 export async function activate(context: vscode.ExtensionContext) {
   initSecretStorage(context.secrets);
   initTransferStatusBar(context);
+  initTransferHistory(context);
 
   try {
     initCommands(context);
