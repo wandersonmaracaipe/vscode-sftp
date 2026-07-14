@@ -1,11 +1,11 @@
 import upath from './upath';
-import { promptForPassword } from '../host';
+import { promptForPassword, showConfirmWarning } from '../host';
 import logger from '../logger';
 import app from '../app';
 import StatusBarItem from '../ui/statusBarItem';
 import { getStoredPassword } from '../modules/secretStorage';
 import { isTransientError } from './transientError';
-import { ConnectOption } from './remote-client/remoteClient';
+import { ConnectOption, HostKeyPrompt } from './remote-client/remoteClient';
 import {
   FileSystem,
   RemoteFileSystem,
@@ -90,6 +90,17 @@ class KeepAliveRemoteFs {
       return promptForPassword(msg);
     };
 
+    // Only reached for a host we've never recorded — a key that changed is
+    // refused outright by the client, never offered for approval here.
+    const confirmHostKey = (prompt: HostKeyPrompt) =>
+      showConfirmWarning(
+        `O servidor ${prompt.host} não é conhecido. Deseja confiar nele?`,
+        `Impressão digital da chave (${prompt.keyType}):\n${prompt.fingerprint}\n\n` +
+          `Confirme que ela corresponde à chave do servidor antes de aceitar. ` +
+          `Ao aceitar, a chave será registrada em known_hosts e não será perguntado novamente.`,
+        'Confiar e conectar'
+      );
+
     app.sftpBarItem.showMsg('conectando...', connectOption.connectTimeout);
     this.pendingPromise = (async () => {
       let lastError;
@@ -105,7 +116,7 @@ class KeepAliveRemoteFs {
         this.fs.onDisconnected(this.invalid.bind(this));
 
         try {
-          await this.fs.connect(connectOption, { askForPasswd });
+          await this.fs.connect(connectOption, { askForPasswd, confirmHostKey });
           this.isValid = true;
           app.sftpBarItem.updateStatus(StatusBarItem.Status.ok);
           app.sftpBarItem.reset();

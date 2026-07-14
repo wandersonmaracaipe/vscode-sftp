@@ -39,6 +39,11 @@ function startSftpServer(root) {
   const resolve = p => path.join(root, p.replace(/^\/+/, ''));
 
   const server = new Server({ hostKeys: [hostKey] }, client => {
+    // A client that rejects our host key aborts the key exchange, which the
+    // Server surfaces as an 'error' event. Without a listener that becomes an
+    // unhandled 'error' and takes the whole test process down — so swallow it:
+    // the client-side assertion is what the host-key tests are checking.
+    client.on('error', () => {});
     client.on('authentication', ctx => ctx.accept());
     client.on('ready', () => {
       client.on('session', accept => {

@@ -76,6 +76,8 @@ interface SftpOption {
   sshConfigPath?: string;
   concurrency: number;
   sshCustomParams?: string;
+  hostKeyChecking?: 'strict' | 'prompt' | 'off';
+  knownHosts?: string;
   hop: (Host & SftpOption)[] | (Host & SftpOption);
 }
 
@@ -230,6 +232,10 @@ function mergeConfigWithExternalRefer(
 
   if (config.protocol !== 'sftp') {
     return copyed;
+  }
+
+  if (copyed.knownHosts) {
+    copyed.knownHosts = replaceHomePath(copyed.knownHosts);
   }
 
   const sshConfigPath = replaceHomePath(

@@ -31,6 +31,8 @@ const configScheme = Joi.object({
   algorithms: Joi.any(),
   sshConfigPath: Joi.string(),
   sshCustomParams: Joi.string(),
+  hostKeyChecking: Joi.any().valid('strict', 'prompt', 'off'),
+  knownHosts: Joi.string(),
 
   secure: Joi.any().valid(true, false, 'control', 'implicit'),
   secureOptions: nullable(Joi.object()),
@@ -106,6 +108,11 @@ const defaultConfig = {
   // passphrase,
   interactiveAuth: false,
   // algorithms,
+  // Verify the server's key against known_hosts and ask before trusting a host
+  // for the first time. A key that CHANGED is always refused. Use 'off' to
+  // restore the old (unsafe) behaviour of accepting any key.
+  hostKeyChecking: 'prompt',
+  // knownHosts, defaults to ~/.ssh/known_hosts
 
   // ftp
   secure: false,

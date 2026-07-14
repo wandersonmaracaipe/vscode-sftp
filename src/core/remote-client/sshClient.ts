@@ -5,6 +5,13 @@ import localFs from '../localFs';
 import { FileSystem, RemoteFileSystem, SFTPFileSystem } from '../fs';
 import logger from '../../logger';
 import CustomError from '../customError';
+import {
+  HostKeyVerdict,
+  verifyHostKey,
+  addKnownHost,
+  parseHostKey,
+  defaultKnownHostsPath,
+} from './knownHosts';
 
 let MAX_OPEN_FD_NUM = 222;
 
@@ -233,6 +240,74 @@ export default class SSHClient extends RemoteClient {
     };
   }
 
+  // Decides whether to continue the handshake with the key the server presented.
+  // A key that doesn't match the one we already recorded is never accepted
+  // automatically: that's the shape of a man-in-the-middle, and OpenSSH refuses
+  // it too. Rewriting the user's known_hosts to "fix" it would risk dropping
+  // unrelated hosts sharing the line, so we tell them what to remove instead.
+  private async _verifyHostKey(
+    keyBlob: Buffer,
+    option: ConnectOption,
+    config: Config
+  ): Promise<boolean> {
+    const mode = option.hostKeyChecking || 'prompt';
+    const knownHostsPath = option.knownHosts || defaultKnownHostsPath();
+    const { keyType, key, fingerprint } = parseHostKey(keyBlob);
+    const verdict = verifyHostKey(knownHostsPath, option.host, option.port, keyType, key);
+
+    if (verdict === HostKeyVerdict.Known) {
+      return true;
+    }
+
+    if (verdict === HostKeyVerdict.Revoked) {
+      logger.error(
+        `[${option.host}]: a chave do servidor está marcada como revogada em ${knownHostsPath}. Conexão recusada.`
+      );
+      return false;
+    }
+
+    if (verdict === HostKeyVerdict.Changed) {
+      logger.error(
+        `[${option.host}]: A CHAVE DO SERVIDOR MUDOU (${keyType} ${fingerprint}). ` +
+          `Isso pode indicar um ataque man-in-the-middle. Se o servidor foi realmente ` +
+          `reinstalado, remova a entrada antiga de ${knownHostsPath} e conecte novamente.`
+      );
+      return false;
+    }
+
+    // Unknown host.
+    if (mode === 'strict' || !config.confirmHostKey) {
+      logger.error(
+        `[${option.host}]: chave do servidor desconhecida (${keyType} ${fingerprint}) e ` +
+          `"hostKeyChecking" está em "strict". Adicione-a a ${knownHostsPath} para conectar.`
+      );
+      return false;
+    }
+
+    const accepted = await config.confirmHostKey({
+      host: option.host,
+      port: option.port,
+      keyType,
+      fingerprint,
+      changed: false,
+    });
+
+    if (!accepted) {
+      return false;
+    }
+
+    try {
+      addKnownHost(knownHostsPath, option.host, option.port, keyType, key);
+      logger.info(`[${option.host}]: chave do servidor adicionada a ${knownHostsPath}`);
+    } catch (error) {
+      // Failing to persist shouldn't abort a connection the user just approved;
+      // they'll simply be asked again next time.
+      logger.warn(`Não foi possível gravar em ${knownHostsPath}: ${error && error.message}`);
+    }
+
+    return true;
+  }
+
   private async _connectSSHClient(
     client,
     remoteOption: ConnectOption,
@@ -241,6 +316,8 @@ export default class SSHClient extends RemoteClient {
     const {
       interactiveAuth,
       connectTimeout,
+      hostKeyChecking,
+      knownHosts,
       ...option // tslint:disable-line
     } = remoteOption;
 
@@ -296,6 +373,21 @@ export default class SSHClient extends RemoteClient {
         });
       }
 
+      // Without a hostVerifier ssh2 accepts every key it's offered ("Host
+      // accepted by default (no verification)"), which is what leaves the
+      // connection open to a man-in-the-middle. Returning undefined below keeps
+      // the handshake waiting until the async check calls verify().
+      const hostVerifier =
+        hostKeyChecking === 'off'
+          ? undefined
+          : (keyBlob: Buffer, verify: (permitted: boolean) => void) => {
+              this._verifyHostKey(keyBlob, remoteOption, config).then(verify, error => {
+                logger.error(error, `verify host key ${option.host}`);
+                verify(false);
+              });
+              return undefined;
+            };
+
       client
         .on('ready', resolve)
         .on('error', err => {
@@ -316,6 +408,7 @@ export default class SSHClient extends RemoteClient {
             // ? Math.max(10800 * 1000, connectTimeout || 0) // 180 mins
             : connectTimeout,
           ...option,
+          hostVerifier,
           tryKeyboard: !!interactiveAuth,
         });
     });

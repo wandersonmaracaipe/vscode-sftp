@@ -36,6 +36,8 @@ O arquivo de configuração pode ser acessado a qualquer momento com `CTRL` + `S
 - [agent](#agent)
 - [privateKeyPath](#privatekeypath)
 - [passphrase](#passphrase)
+- [hostKeyChecking](#hostkeychecking)
+- [knownHosts](#knownhosts)
 - [interactiveAuth](#interactiveauth)
 - [algorithms](#algorithms)
 - [sshConfigPath](#sshconfigpath)
@@ -504,6 +506,42 @@ Defina como 'true' para habilitar o diálogo de passphrase. Isso evitará o uso 
 ```json
 {
   "passphrase": true
+}
+```
+
+### hostKeyChecking
+Verifica a chave do servidor SSH contra o `known_hosts` antes de conectar — a proteção contra ataques *man-in-the-middle*.
+
+| Valor | Comportamento |
+| --- | --- |
+| `"prompt"` (padrão) | Em um host **desconhecido**, mostra a impressão digital (fingerprint) e pergunta se você confia. Ao aceitar, a chave é registrada no `known_hosts` e não é perguntado de novo. |
+| `"strict"` | Só conecta em hosts **já registrados** no `known_hosts`. Nunca pergunta. |
+| `"off"` | Não verifica nada e aceita qualquer chave. **Inseguro** — use apenas em redes confiáveis. |
+
+| ⚠️ Chave alterada |
+| :--- |
+| *Se o servidor apresentar uma chave **diferente** da registrada, a conexão é sempre recusada — em qualquer modo exceto `"off"`. Isso pode indicar um ataque. Se o servidor foi legitimamente reinstalado, remova a entrada antiga do `known_hosts` e conecte novamente.* |
+
+| Chave | Valor | Padrão |
+| --- | --- | --- |
+| *hostKeyChecking* | `"strict"`\|`"prompt"`\|`"off"` | `"prompt"` |
+
+```json
+{
+  "hostKeyChecking": "prompt"
+}
+```
+
+### knownHosts
+Caminho do arquivo `known_hosts` usado pelo [hostKeyChecking](#hostkeychecking). Suporta `~/`.
+
+| Chave | Valor | Padrão |
+| --- | --- | --- |
+| *knownHosts* | *string* | `~/.ssh/known_hosts` |
+
+```json
+{
+  "knownHosts": "~/.ssh/known_hosts"
 }
 ```
 

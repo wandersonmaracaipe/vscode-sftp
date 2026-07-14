@@ -18,6 +18,8 @@ export interface ConnectOption {
   sock?: any;
   hop?: ConnectOption | ConnectOption[];
   limitOpenFilesOnRemote?: boolean | number;
+  hostKeyChecking?: 'strict' | 'prompt' | 'off';
+  knownHosts?: string;
 
   // ftp-only
   secure?: any;
@@ -27,10 +29,22 @@ export interface ConnectOption {
 
 export enum ErrorCode {
   CONNECT_CANCELLED,
+  HOST_KEY_REJECTED,
+}
+
+export interface HostKeyPrompt {
+  host: string;
+  port: number;
+  keyType: string;
+  fingerprint: string;
+  changed: boolean;
 }
 
 export interface Config {
   askForPasswd(msg: string): Promise<string | undefined>;
+  // Asked when the server's key isn't in known_hosts. Resolving true accepts and
+  // records the key; anything else aborts the connection.
+  confirmHostKey?(prompt: HostKeyPrompt): Promise<boolean>;
 }
 
 export default abstract class RemoteClient {

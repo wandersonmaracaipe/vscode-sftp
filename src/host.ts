@@ -97,6 +97,23 @@ export async function showConfirmMessage(
   return Boolean(result && result.title === confirmLabel);
 }
 
+// A modal warning the user has to answer before anything else happens — used for
+// decisions with security weight, where a dismissable toast would let them
+// proceed without ever reading it. Modal dialogs supply their own Cancel button.
+export async function showConfirmWarning(
+  message: string,
+  detail: string,
+  confirmLabel: string
+): Promise<boolean> {
+  const result = await vscode.window.showWarningMessage(
+    message,
+    { modal: true, detail },
+    { title: confirmLabel }
+  );
+
+  return Boolean(result && result.title === confirmLabel);
+}
+
 export function showOpenDialog(options: vscode.OpenDialogOptions) {
   return vscode.window.showOpenDialog(options);
 }
