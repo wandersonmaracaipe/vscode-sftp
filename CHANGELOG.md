@@ -1,3 +1,12 @@
+## 1.21.0 - 2026-07-08
+Sincronização inteligente e produtividade no Remote Explorer.
+
+* **Preview de Sincronização (dry-run)**: novo comando **"SFTP: Preview de Sincronização (Local → Remoto)"** que mostra o que seria enviado e excluído **antes** de aplicar, com opção de aplicar em seguida.
+* **Aviso de conflito**: opção `warnRemoteNewer` — ao enviar um arquivo (inclusive no envio ao salvar), avisa se a cópia remota for mais recente que a local.
+* **Progresso determinado**: transferências com vários arquivos agora exibem uma barra por bytes com **porcentagem, velocidade e tempo restante estimado**.
+* **Renomear / Mover no remoto**: novo comando no Remote Explorer para renomear (ou mover, informando um caminho) itens remotos.
+* **Indicador de transferências**: um item na barra de status mostra quantas transferências estão em andamento e cancela todas ao clicar.
+
 ## 1.20.0 - 2026-07-08
 Release de modernização sob o fork da **Valuor** (baseado em [Natizyskunk/vscode-sftp](https://github.com/Natizyskunk/vscode-sftp), originalmente de [liximomo](https://github.com/liximomo/vscode-sftp)).
 

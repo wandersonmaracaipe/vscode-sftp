@@ -11,7 +11,14 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
-**Novidades desta versão (1.20.0):**
+**Novidades da 1.21.0:**
+- **Preview de Sincronização (dry-run)** — veja o que será enviado/excluído antes de aplicar.
+- **Aviso de conflito** (`warnRemoteNewer`) ao enviar por cima de um arquivo remoto mais recente.
+- **Progresso por bytes** com porcentagem, velocidade e tempo restante estimado.
+- **Renomear / Mover** itens remotos pelo Remote Explorer.
+- **Indicador de transferências** em andamento na barra de status (clique para cancelar).
+
+**Novidades da 1.20.0:**
 - Biblioteca FTP abandonada (`ftp`) substituída pela moderna `basic-ftp`.
 - Correção do travamento "isDate is not a function" em versões recentes do VS Code (atualização do `ssh2`).
 - Correções de bugs do projeto de origem: "Config Not Found" ao salvar/enviar (#428), sobrescrita silenciosa ao criar arquivo (#228) e _symlinks_ para diretórios agora navegáveis (#177).
