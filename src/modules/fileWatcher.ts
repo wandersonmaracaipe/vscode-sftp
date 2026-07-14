@@ -36,15 +36,52 @@ const deleteQueue = new Set<vscode.Uri>();
 // less than 550 will not work
 const ACTION_INTEVAL = 550;
 
+const DEFAULT_CONCURRENCY = 4;
+
+// Each upload()/removeRemote() spins up its own transfer scheduler, so firing
+// the whole batch at once opens one connection slot per file — a branch switch
+// touching hundreds of files would open hundreds of concurrent transfers and
+// exhaust the connection. Bound the batch to the service's own `concurrency`.
+function batchConcurrency(uri: vscode.Uri): number {
+  try {
+    const fileService = getFileService(uri);
+    const concurrency = fileService && fileService.getConfig().concurrency;
+    return typeof concurrency === 'number' && concurrency >= 1
+      ? concurrency
+      : DEFAULT_CONCURRENCY;
+  } catch {
+    return DEFAULT_CONCURRENCY;
+  }
+}
+
+async function runBounded<T>(items: T[], limit: number, run: (item: T) => Promise<void>) {
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      await run(items[cursor++]);
+    }
+  });
+  await Promise.all(workers);
+}
+
+// Batches run one after another. Without this, a slow batch still in flight when
+// the next debounce fires would stack another pool on top of it, defeating the
+// concurrency bound.
+let uploadChain: Promise<void> = Promise.resolve();
+let deleteChain: Promise<void> = Promise.resolve();
+
 function doUpload() {
   const files = Array.from(uploadQueue).sort((a, b) => fileDepth(b.fsPath) - fileDepth(a.fsPath));
   uploadQueue.clear();
+  if (!files.length) {
+    return;
+  }
 
   const currentDownloadTasks = getRunningTransformTasks().filter(
     task => task.transferType === TransferDirection.REMOTE_TO_LOCAL
   );
 
-  files.forEach(async uri => {
+  const uploadOne = async (uri: vscode.Uri) => {
     // current target is still in downloading, so don't upload it.
     if (currentDownloadTasks.find(task => task.localFsPath === uri.fsPath)) {
       return;
@@ -65,13 +102,21 @@ function doUpload() {
       logger.error(error, `upload ${fspath}`);
       app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
     }
-  });
+  };
+
+  uploadChain = uploadChain
+    .then(() => runBounded(files, batchConcurrency(files[0]), uploadOne))
+    .catch(error => logger.error(error, 'watcher upload batch'));
 }
 
 function doDelete() {
   const files = Array.from(deleteQueue).sort((a, b) => fileDepth(b.fsPath) - fileDepth(a.fsPath));
   deleteQueue.clear();
-  files.forEach(async uri => {
+  if (!files.length) {
+    return;
+  }
+
+  const deleteOne = async (uri: vscode.Uri) => {
     const fspath = uri.fsPath;
     logger.info(`[watcher/removed] ${fspath}`);
     try {
@@ -80,7 +125,11 @@ function doDelete() {
       logger.error(error, `remove ${fspath}`);
       app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
     }
-  });
+  };
+
+  deleteChain = deleteChain
+    .then(() => runBounded(files, batchConcurrency(files[0]), deleteOne))
+    .catch(error => logger.error(error, 'watcher delete batch'));
 }
 
 const debouncedUpload = debounce(doUpload, ACTION_INTEVAL, { leading: true, trailing: true });
