@@ -6,6 +6,7 @@ import { simplifyPath, reportError } from '../../helper';
 import { UResource, FileService, TransferTask } from '../../core';
 import { validateConfig } from '../config';
 import watcherService from '../fileWatcher';
+import { renderTransferCount } from '../transferStatusBar';
 import Trie from './trie';
 
 const WIN_DRIVE_REGEX = /^([a-zA-Z]):/;
@@ -116,8 +117,10 @@ export function createFileService(config: any, workspace: string) {
       `${transferType} ${path.basename(localFsPath)}`,
       simplifyPath(localFsPath)
     );
+    renderTransferCount(getRunningTransformTasks().length);
   });
   service.afterTransfer((error, task) => {
+    renderTransferCount(getRunningTransformTasks().length);
     const { localFsPath, transferType } = task;
     const filename = path.basename(localFsPath);
     const filepath = simplifyPath(localFsPath);

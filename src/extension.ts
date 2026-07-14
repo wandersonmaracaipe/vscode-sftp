@@ -10,6 +10,7 @@ import { tryLoadConfigs } from './modules/config';
 import { getAllFileService, createFileService, disposeFileService } from './modules/serviceManager';
 import { getWorkspaceFolders, setContextValue } from './host';
 import { initSecretStorage } from './modules/secretStorage';
+import { initTransferStatusBar } from './modules/transferStatusBar';
 import RemoteExplorer from './modules/remoteExplorer';
 
 async function setupWorkspaceFolder(dir) {
@@ -30,6 +31,7 @@ function setup(workspaceFolders: readonly vscode.WorkspaceFolder[]) {
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
   initSecretStorage(context.secrets);
+  initTransferStatusBar(context);
 
   try {
     initCommands(context);
