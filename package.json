@@ -100,6 +100,11 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.migratePasswords",
+        "title": "Migrar Senhas do sftp.json para o Cofre",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.transferHistory.retry",
         "title": "Repetir Transferência",
         "category": "SFTP",

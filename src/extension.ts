@@ -12,6 +12,7 @@ import { getWorkspaceFolders, setContextValue } from './host';
 import { initSecretStorage } from './modules/secretStorage';
 import { initTransferStatusBar } from './modules/transferStatusBar';
 import { initTransferHistory } from './modules/transferHistory';
+import { initPasswordMigration, checkPlaintextPasswords } from './modules/passwordMigration';
 import RemoteExplorer from './modules/remoteExplorer';
 
 async function setupWorkspaceFolder(dir) {
@@ -34,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
   initSecretStorage(context.secrets);
   initTransferStatusBar(context);
   initTransferHistory(context);
+  initPasswordMigration(context);
 
   try {
     initCommands(context);
@@ -64,6 +66,15 @@ export async function activate(context: vscode.ExtensionContext) {
   } catch (error) {
     reportError(error);
   }
+
+  // Offer to move any plaintext password out of sftp.json. Not awaited: it's a
+  // prompt the user answers on their own time, and activation shouldn't block
+  // on it.
+  workspaceFolders.forEach(folder => {
+    checkPlaintextPasswords(folder.uri.fsPath).catch(error =>
+      reportError(error, 'checkPlaintextPasswords')
+    );
+  });
 }
 
 export function deactivate() {
