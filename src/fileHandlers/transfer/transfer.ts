@@ -81,12 +81,14 @@ async function transferFolder(
   }
 
   // Need this to make sure file can correct transfer
-  await targetFs.ensureDir(targetFsPath);
+  if (!transferOption.dryRun) {
+    await targetFs.ensureDir(targetFsPath);
 
-  // If dirPerm is configured, we chmod the remote directory after creation.
-  if(config.transferOption.dirPerm) {
-    logger.info("chmod remote directory as configured by dirPerm, dirPerm is: ", config.transferOption.dirPerm)
-    targetFs.chmod(targetFsPath, parseInt(String(config.transferOption.dirPerm), 8))
+    // If dirPerm is configured, we chmod the remote directory after creation.
+    if (config.transferOption.dirPerm) {
+      logger.info("chmod remote directory as configured by dirPerm, dirPerm is: ", config.transferOption.dirPerm)
+      targetFs.chmod(targetFsPath, parseInt(String(config.transferOption.dirPerm), 8))
+    }
   }
 
   const fileEntries = await srcFs.list(srcFsPath);
@@ -165,7 +167,7 @@ async function transferWithType(
         }
       }
       // <<< save before upload: start
-      if (config.transferDirection === TransferDirection.LOCAL_TO_REMOTE) {
+      if (!config.transferOption.dryRun && config.transferDirection === TransferDirection.LOCAL_TO_REMOTE) {
         const textDocuments = getOpenTextDocuments();
         const document = textDocuments.find(doc => doc.fileName === config.srcFsPath);
         if (document && !document.isClosed && document.isDirty) {
@@ -369,9 +371,11 @@ async function _sync(
       });
     }
 
-    // side-effect
-    fileMissed.forEach(file => removeFile(file, targetFs, FileType.File, transferOption));
-    dirMissed.forEach(file => removeFile(file, targetFs, FileType.Directory, transferOption));
+    // side-effect (skipped on a dry run — the removals are still reported via `deleted`)
+    if (!transferOption.dryRun) {
+      fileMissed.forEach(file => removeFile(file, targetFs, FileType.File, transferOption));
+      dirMissed.forEach(file => removeFile(file, targetFs, FileType.Directory, transferOption));
+    }
 
     const transFilePromise = file2trans.map(([src, target, direction, option]) =>
       transferFile(
@@ -414,7 +418,9 @@ async function _sync(
   };
 
   // create dir here so we don't have to ensure it for children files.
-  await targetFs.ensureDir(targetFsPath);
+  if (!transferOption.dryRun) {
+    await targetFs.ensureDir(targetFsPath);
+  }
 
   const files = await Promise.all([
     srcFs.list(srcFsPath).catch(err => []),

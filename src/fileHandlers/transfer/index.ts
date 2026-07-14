@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { refreshRemoteExplorer } from '../shared';
-import { FileService, TransferScheduler } from '../../core';
+import { upath, FileService, TransferScheduler, TransferTask } from '../../core';
 import createFileHandler, { FileHandlerContext } from '../createFileHandler';
 import { transfer, sync, TransferOption, SyncOption, TransferDirection } from './transfer';
 
@@ -262,6 +262,101 @@ export const sync2Local = createFileHandler<SyncOption>({
       ignoreExisting: syncOption.ignoreExisting,
       update: syncOption.update,
     };
+  },
+});
+
+// Dry-run preview of a Local ➞ Remote sync: lists what would be uploaded and
+// deleted without touching the remote, then offers to apply the sync.
+export const syncPreview2Remote = createFileHandler<SyncOption>({
+  name: 'sync preview local ➞ remote',
+  async handle(option) {
+    const remoteFs = await this.fileService.getRemoteFileSystem(this.config);
+    const localFs = this.fileService.getLocalFileSystem();
+    const { localFsPath, remoteFsPath } = this.target;
+    const fileService = this.fileService;
+    const concurrency = this.config.concurrency;
+
+    const buildConfig = (dryRun: boolean) => ({
+      srcFsPath: localFsPath,
+      srcFs: localFs,
+      targetFsPath: remoteFsPath,
+      targetFs: remoteFs,
+      transferOption: { ...option, dryRun },
+      transferDirection: TransferDirection.LOCAL_TO_REMOTE,
+    });
+
+    const collected: TransferTask[] = [];
+    const deleted = await sync(buildConfig(true), t => collected.push(t));
+
+    if (collected.length === 0 && deleted.length === 0) {
+      vscode.window.showInformationMessage('SFTP: nada para sincronizar (local ➞ remoto). ✅');
+      return;
+    }
+
+    const changes: vscode.QuickPickItem[] = [
+      ...collected.map(t => ({
+        label: `$(arrow-up) ${upath.basename(t.targetFsPath)}`,
+        description: t.targetFsPath,
+        detail: 'Enviar',
+      })),
+      ...deleted.map(f => ({
+        label: `$(trash) ${upath.basename(f.fspath)}`,
+        description: f.fspath,
+        detail: 'Excluir no remoto',
+      })),
+    ];
+
+    const APPLY = '$(check) Aplicar sincronização';
+    const summary = `${collected.length} envio(s) · ${deleted.length} exclusão(ões)`;
+    const pick = await vscode.window.showQuickPick(
+      [{ label: APPLY, description: summary }, ...changes],
+      {
+        placeHolder: `Preview local ➞ remoto: ${summary}. Escolha "Aplicar" para sincronizar.`,
+        matchOnDescription: true,
+      }
+    );
+
+    if (!pick || pick.label !== APPLY) {
+      return;
+    }
+
+    // Apply for real.
+    const scheduler = fileService.createTransferScheduler(concurrency);
+    const bytes = { transferred: 0 };
+    let totalBytes = 0;
+    option.filePerm = this.config.filePerm;
+    option.dirPerm = this.config.dirPerm;
+    option.onProgress = (delta: number) => {
+      bytes.transferred += delta;
+    };
+    await sync(buildConfig(false), t => {
+      totalBytes += t.fileSize;
+      scheduler.add(t);
+    });
+    await runSchedulerWithProgress(
+      scheduler,
+      fileService,
+      'SFTP: Sincronizando local ➞ remoto',
+      bytes,
+      totalBytes
+    );
+  },
+  transformOption() {
+    const config = this.config;
+    const syncOption = config.syncOption || {};
+    return {
+      perserveTargetMode: config.protocol === 'sftp' && !config.filePerm && !config.dirPerm,
+      useTempFile: config.useTempFile,
+      openSsh: config.openSsh,
+      ignore: config.ignore,
+      delete: syncOption.delete,
+      skipCreate: syncOption.skipCreate,
+      ignoreExisting: syncOption.ignoreExisting,
+      update: syncOption.update,
+    };
+  },
+  afterHandle() {
+    refreshRemoteExplorer(this.target, true);
   },
 });
 

@@ -30,6 +30,8 @@ export interface TransferOption {
   size?: number;
   // Called with the number of bytes as they stream through the transfer.
   onProgress?: (bytesDelta: number) => void;
+  // Dry run: collect what would change without touching the remote/local.
+  dryRun?: boolean;
 }
 
 export default class TransferTask implements Task {
