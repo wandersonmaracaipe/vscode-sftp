@@ -4,7 +4,8 @@ import logger from '../logger';
 import app from '../app';
 import StatusBarItem from '../ui/statusBarItem';
 import { getStoredPassword } from '../modules/secretStorage';
-import { ConnectOption, ErrorCode } from './remote-client/remoteClient';
+import { isTransientError } from './transientError';
+import { ConnectOption } from './remote-client/remoteClient';
 import {
   FileSystem,
   RemoteFileSystem,
@@ -18,24 +19,6 @@ const RECONNECT_DELAY_MS = 1000;
 
 function delay(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
-}
-
-// Só repete falhas de conexão que parecem transitórias (rede); nunca falhas de
-// autenticação nem quando o usuário cancela a conexão.
-function isTransientConnectError(err: any): boolean {
-  if (!err) return false;
-  if (err.code === ErrorCode.CONNECT_CANCELLED) return false;
-  const code = typeof err.code === 'string' ? err.code : '';
-  if (
-    ['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED', 'EHOSTUNREACH', 'ENETUNREACH', 'EPIPE', 'EAI_AGAIN'].indexOf(
-      code
-    ) !== -1
-  ) {
-    return true;
-  }
-  const msg = String((err && err.message) || '').toLowerCase();
-  if (/authentication|password|permission denied|all configured/.test(msg)) return false;
-  return /timeout|socket hang up|econnreset|network|reset by peer/.test(msg);
 }
 
 function hashOption(opiton) {
@@ -135,7 +118,7 @@ class KeepAliveRemoteFs {
             // ignore teardown errors
           }
 
-          if (attempt >= MAX_CONNECT_ATTEMPTS || !isTransientConnectError(err)) {
+          if (attempt >= MAX_CONNECT_ATTEMPTS || !isTransientError(err)) {
             break;
           }
 

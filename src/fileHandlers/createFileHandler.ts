@@ -1,8 +1,16 @@
 import { Uri } from 'vscode';
 import app from '../app';
 import { UResource, FileService, ServiceConfig } from '../core';
+import { isTransientError } from '../core/transientError';
 import logger from '../logger';
 import { getFileService } from '../modules/serviceManager';
+
+const MAX_ATTEMPTS = 3; // 1 initial attempt + 2 retries
+const RETRY_BASE_DELAY_MS = 700;
+
+function delay(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
 
 interface FileHandlerConfig {
   _?: boolean;
@@ -105,15 +113,27 @@ export default function createFileHandler<T>(
 
     app.sftpBarItem.startSpinner();
     try {
-      await handlerOption.handle.call(handleCtx, invokeOption);
-    // } catch (error) {
-    //   reportError(error, `when ${handlerOption.name} ${target.localFsPath}`);
-    //   Object.defineProperty(error, 'reported', {
-    //     configurable: false,
-    //     enumerable: false,
-    //     value: true,
-    //   });
-    //   throw error;
+      // Retry on transient failures. The handler re-resolves the remote file
+      // system on every attempt, so a dropped connection — and the "Client is
+      // closed" errors every queued file gets after it — reconnects instead of
+      // failing the file. Permanent errors (auth, missing file, cancellation)
+      // are rethrown on the first attempt.
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await handlerOption.handle.call(handleCtx, invokeOption);
+          break;
+        } catch (error) {
+          if (attempt >= MAX_ATTEMPTS || !isTransientError(error)) {
+            throw error;
+          }
+
+          logger.warn(
+            `${handlerOption.name} ${target.localFsPath} falhou ` +
+              `(tentativa ${attempt}/${MAX_ATTEMPTS}): ${error && error.message}. Tentando novamente…`
+          );
+          await delay(RETRY_BASE_DELAY_MS * attempt);
+        }
+      }
     } finally {
       app.sftpBarItem.stopSpinner();
     }
