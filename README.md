@@ -11,6 +11,15 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
+**Novidades da 1.22.0:**
+- ⚠️ **Verificação da chave do servidor (`known_hosts`)** — correção de segurança importante: a extensão aceitava a chave de **qualquer** servidor SSH sem verificar, deixando toda conexão SFTP exposta a um ataque *man-in-the-middle*. Agora a chave é verificada; um host desconhecido mostra a impressão digital e pede confirmação, e uma chave **alterada** é sempre recusada. Configurável por `hostKeyChecking` (`"prompt"` | `"strict"` | `"off"`).
+- **Migração de senhas em texto plano** do `sftp.json` para o cofre do sistema.
+- **Passphrase da chave privada no cofre** — não é mais pedida a cada conexão.
+- **ssh-agent automático** via `SSH_AUTH_SOCK` quando nenhuma credencial é configurada.
+- **Retry automático por arquivo** em falhas transitórias — uma queda de conexão não perde mais os arquivos da fila.
+- **Limite de concorrência no envio automático** — um `git checkout` grande não satura mais a conexão.
+- **Painel "Histórico de Transferências"** com "Repetir" nas que falharam.
+
 **Novidades da 1.21.1:**
 - **Correção crítica no _watcher_** — o envio automático não consultava as regras de `ignore` antes de enfileirar arquivos: pastas como `node_modules` eram enviadas e um arquivo temporário que sumia no meio da transferência (por exemplo, durante um `npm install`) derrubava a conexão FTP, gerando uma cascata de erros _"Client is closed"_. Agora o `ignore` é respeitado tanto no envio quanto na exclusão.
 - **Padrão de `ignore` mais seguro** — quando você **não** define `ignore` no `sftp.json`, o padrão passa a ser `[".vscode", ".git", ".DS_Store", "node_modules"]` (antes era vazio), evitando sincronizar pastas pesadas ou transitórias por acidente. Definir a sua própria lista continua **substituindo** o padrão.

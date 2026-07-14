@@ -1,3 +1,21 @@
+## 1.22.0 - 2026-07-14
+Blindagem: confiabilidade das transferências e segurança da conexão.
+
+### Segurança
+* **Verificação da chave do servidor (`known_hosts`)** — ⚠️ **correção de segurança importante.** A extensão aceitava a chave de **qualquer** servidor SSH sem verificar (o `ssh2` registra literalmente *"Host accepted by default (no verification)"*), deixando toda conexão SFTP exposta a um ataque *man-in-the-middle*: quem conseguisse responder pelo host podia apresentar a própria chave, capturar a senha e retransmitir a sessão. Agora a chave é verificada contra o `known_hosts` (formato OpenSSH, incluindo entradas com host *hasheado* e portas não padrão). Nova opção **`hostKeyChecking`**:
+  * `"prompt"` (padrão) — em um host desconhecido, mostra a impressão digital SHA256 e pergunta se você confia; ao aceitar, a chave é registrada.
+  * `"strict"` — só conecta em hosts já registrados.
+  * `"off"` — não verifica nada (comportamento antigo, inseguro).
+  * Uma chave **alterada** é **sempre recusada** (exceto em `"off"`) e nunca é oferecida para aprovação — é a assinatura de um ataque. Nova opção `knownHosts` para apontar outro arquivo.
+* **Migração de senhas em texto plano** — na ativação, a extensão detecta senhas em texto plano no `sftp.json` e oferece movê-las para o cofre do sistema, removendo-as do arquivo (que costuma ir para o git). Também disponível pelo comando **"SFTP: Migrar Senhas do sftp.json para o Cofre"**.
+* **Passphrase no cofre** — a passphrase da chave privada (`passphrase: true`) deixa de ser pedida a cada conexão e passa a ser guardada no cofre, **separada** da senha da conta. (Antes, o prompt de passphrase devolvia a *senha* salva, por compartilharem a mesma chave no cofre.)
+* **ssh-agent automático** — sem nenhuma credencial configurada, o `SSH_AUTH_SOCK` é usado automaticamente em vez de pedir uma senha.
+
+### Confiabilidade
+* **Retry automático por arquivo** — antes, só o *connect* era repetido; um arquivo que falhava no meio da transferência era apenas registrado no log e perdido, e quando a conexão caía **todos** os arquivos na fila falhavam com *"Client is closed"* sem se recuperar. Agora falhas transitórias são repetidas (até 3 tentativas, com backoff) reconectando de verdade. Falhas de autenticação, arquivos inexistentes e cancelamentos **não** são repetidos.
+* **Limite de concorrência no observador** — o envio automático disparava *todas* as transferências de uma vez; um `git checkout` com centenas de arquivos abria centenas de transferências simultâneas e saturava a conexão. Agora o lote respeita a opção `concurrency` (padrão 4; 1 no FTP).
+* **Painel "Histórico de Transferências"** — nova árvore na barra lateral do SFTP com as últimas transferências (sucesso / falha / cancelada), com **"Repetir"** nas que falharam e **"Repetir Todas as Falhas"**.
+
 ## 1.21.1 - 2026-07-14
 Correção de estabilidade no observador de arquivos (auto-upload).
 
