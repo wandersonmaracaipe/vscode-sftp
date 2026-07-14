@@ -158,6 +158,49 @@ export function selectFolderFallbackToConfigContext(item, items): Promise<undefi
   return selectContext();
 }
 
+export async function pickConnection() {
+  const services = getAllFileService();
+  if (services.length === 0) {
+    window.showInformationMessage('SFTP: Nenhuma configuração encontrada.');
+    return undefined;
+  }
+  if (services.length === 1) {
+    return services[0].getConfig();
+  }
+
+  const items = services.map(service => {
+    const config = service.getConfig();
+    return {
+      label: service.name || simplifyPath(service.baseDir),
+      description: `${config.username}@${config.host}:${config.port}`,
+      config,
+    };
+  });
+  const pick = await window.showQuickPick(items, { placeHolder: 'Selecione a conexão' });
+  return pick && pick.config;
+}
+
+export type SecretKind = 'password' | 'passphrase';
+
+// Only worth asking when a private key is configured — without one there is no
+// passphrase to speak of, and the extra pick would just be friction.
+export async function pickSecretKind(config): Promise<SecretKind | undefined> {
+  if (!config.privateKeyPath) {
+    return 'password';
+  }
+
+  // Not named `kind`: QuickPickItem already has a `kind` (separator vs item).
+  const pick = await window.showQuickPick(
+    [
+      { label: 'Senha', secret: 'password' as SecretKind },
+      { label: 'Passphrase da chave privada', secret: 'passphrase' as SecretKind },
+    ],
+    { placeHolder: 'Qual segredo?' }
+  );
+
+  return pick && pick.secret;
+}
+
 // selected file from all remote files
 export const selectFileFromAll = createFileSelector();
 

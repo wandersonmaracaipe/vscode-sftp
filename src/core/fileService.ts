@@ -238,6 +238,21 @@ function mergeConfigWithExternalRefer(
     copyed.knownHosts = replaceHomePath(copyed.knownHosts);
   }
 
+  // With no credential configured at all, fall back to a running ssh-agent
+  // rather than prompting for a password the user may not even have. Only
+  // SSH_AUTH_SOCK is trusted — guessing at Pageant would fail the connect
+  // outright when it isn't running.
+  if (
+    !copyed.agent &&
+    !copyed.password &&
+    !copyed.privateKeyPath &&
+    !copyed.interactiveAuth &&
+    process.env.SSH_AUTH_SOCK
+  ) {
+    copyed.agent = process.env.SSH_AUTH_SOCK;
+    logger.info('nenhuma credencial configurada; usando o ssh-agent de SSH_AUTH_SOCK');
+  }
+
   const sshConfigPath = replaceHomePath(
     config.sshConfigPath || DEFAULT_SSHCONFIG_FILE
   );

@@ -42,6 +42,10 @@ export interface HostKeyPrompt {
 
 export interface Config {
   askForPasswd(msg: string): Promise<string | undefined>;
+  // The private key's passphrase is a different secret from the account password,
+  // so it gets its own callback (and its own vault entry). Falls back to
+  // askForPasswd when not supplied.
+  askForPassphrase?(msg: string): Promise<string | undefined>;
   // Asked when the server's key isn't in known_hosts. Resolving true accepts and
   // records the key; anything else aborts the connection.
   confirmHostKey?(prompt: HostKeyPrompt): Promise<boolean>;

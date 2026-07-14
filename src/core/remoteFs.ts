@@ -3,7 +3,7 @@ import { promptForPassword, showConfirmWarning } from '../host';
 import logger from '../logger';
 import app from '../app';
 import StatusBarItem from '../ui/statusBarItem';
-import { getStoredPassword } from '../modules/secretStorage';
+import { getStoredPassword, getStoredPassphrase } from '../modules/secretStorage';
 import { isTransientError } from './transientError';
 import { ConnectOption, HostKeyPrompt } from './remote-client/remoteClient';
 import {
@@ -90,6 +90,16 @@ class KeepAliveRemoteFs {
       return promptForPassword(msg);
     };
 
+    // The private key's passphrase lives under its own vault key, so a saved
+    // account password can't be handed back in its place.
+    const askForPassphrase = async (msg: string) => {
+      const saved = await getStoredPassphrase(connectOption);
+      if (saved !== undefined) {
+        return saved;
+      }
+      return promptForPassword(msg);
+    };
+
     // Only reached for a host we've never recorded — a key that changed is
     // refused outright by the client, never offered for approval here.
     const confirmHostKey = (prompt: HostKeyPrompt) =>
@@ -116,7 +126,11 @@ class KeepAliveRemoteFs {
         this.fs.onDisconnected(this.invalid.bind(this));
 
         try {
-          await this.fs.connect(connectOption, { askForPasswd, confirmHostKey });
+          await this.fs.connect(connectOption, {
+            askForPasswd,
+            askForPassphrase,
+            confirmHostKey,
+          });
           this.isValid = true;
           app.sftpBarItem.updateStatus(StatusBarItem.Status.ok);
           app.sftpBarItem.reset();

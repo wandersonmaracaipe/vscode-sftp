@@ -19,6 +19,13 @@ export function secretKeyFor(identity: ConnectionIdentity): string {
   return `sftp:${identity.username || ''}@${identity.host || ''}:${identity.port || ''}`;
 }
 
+// A separate namespace from the password. They are different secrets for the
+// same connection, so sharing one key would hand the stored password back when
+// the private key's passphrase is what was asked for.
+export function passphraseKeyFor(identity: ConnectionIdentity): string {
+  return `sftp-passphrase:${identity.username || ''}@${identity.host || ''}:${identity.port || ''}`;
+}
+
 export async function getStoredPassword(
   identity: ConnectionIdentity
 ): Promise<string | undefined> {
@@ -43,4 +50,30 @@ export async function deleteStoredPassword(identity: ConnectionIdentity): Promis
     return;
   }
   await storage.delete(secretKeyFor(identity));
+}
+
+export async function getStoredPassphrase(
+  identity: ConnectionIdentity
+): Promise<string | undefined> {
+  if (!storage) {
+    return undefined;
+  }
+  return storage.get(passphraseKeyFor(identity));
+}
+
+export async function setStoredPassphrase(
+  identity: ConnectionIdentity,
+  passphrase: string
+): Promise<void> {
+  if (!storage) {
+    return;
+  }
+  await storage.store(passphraseKeyFor(identity), passphrase);
+}
+
+export async function deleteStoredPassphrase(identity: ConnectionIdentity): Promise<void> {
+  if (!storage) {
+    return;
+  }
+  await storage.delete(passphraseKeyFor(identity));
 }

@@ -323,9 +323,10 @@ export default class SSHClient extends RemoteClient {
 
     // explict compare to true, cause we want to distinct between string and true
     if (option.passphrase === true) {
-      option.passphrase = await config.askForPasswd(
-        `[${option.host}]: Enter your passphrase`
-      );
+      // Deliberately not askForPasswd: that one is backed by the password entry
+      // in the vault and would hand the account password back here.
+      const ask = config.askForPassphrase || config.askForPasswd;
+      option.passphrase = await ask(`[${option.host}]: Informe a passphrase da chave privada`);
       if (option.passphrase === undefined) {
         throw new CustomError(ErrorCode.CONNECT_CANCELLED, 'cancelled');
       }

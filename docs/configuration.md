@@ -472,6 +472,10 @@ Caminho para o socket UNIX do ssh-agent para autenticação de usuário baseada 
 Usuários do Windows devem definir como 'pageant' para autenticar com o Pageant ou o caminho (real) para um "UNIX socket" do Cygwin. <br>
 Isso proporcionaria mais estabilidade, pois alguns clientes/servidores têm algum tipo de limite configurado/codificado.
 
+| 💡 Detecção automática |
+| :--- |
+| *Se você não definir **nenhuma** credencial (`password`, `privateKeyPath`, `agent` ou `interactiveAuth`) e a variável de ambiente `SSH_AUTH_SOCK` existir, o ssh-agent dela é usado automaticamente — em vez de pedir uma senha.* |
+
 | Chave | Valor |
 | --- | --- |
 | *agent* | *string* |
@@ -497,7 +501,8 @@ Caminho absoluto para a chave privada do usuário.
 
 ### passphrase
 Para uma chave privada criptografada, esta é a string de passphrase usada para descriptografá-la. <br>
-Defina como 'true' para habilitar o diálogo de passphrase. Isso evitará o uso de passphrase em texto puro nesta configuração.
+Defina como 'true' para habilitar o diálogo de passphrase. Isso evitará o uso de passphrase em texto puro nesta configuração. <br>
+Com `true`, a passphrase pode ser guardada no cofre do sistema pelo comando **"SFTP: Salvar Senha no Cofre"** (escolha *Passphrase da chave privada*) — assim ela não é pedida a cada conexão. Ela é guardada separadamente da senha da conta.
 
 | Chave | Valor |
 | --- | --- |
