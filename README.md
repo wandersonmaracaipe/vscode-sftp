@@ -11,6 +11,11 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
+**Novidades da 1.22.2:**
+- **Conexão morta no SFTP** — mesma correção da 1.22.1, agora para SFTP: uma conexão encerrada continuava parecendo válida.
+- **`sync` com `delete: true`** — o sync terminava com as exclusões ainda em andamento, e uma exclusão que falhava parecia bem-sucedida. Agora são aguardadas.
+- **Testes do algoritmo de sync** — o código que apaga arquivos remotos passou a ter cobertura (foi ela que encontrou o bug acima).
+
 **Novidades da 1.22.1:**
 - **Correção crítica — "para de fazer upload"**: bastava **um** erro para a extensão parar de enviar até recarregar a janela. Quando o cliente FTP caía, o pool continuava entregando a conexão **morta** indefinidamente, e tudo falhava com `"Client is closed"`. Agora uma conexão morta é detectada e substituída automaticamente.
 - **Arquivos temporários de editor** (`*.tmp.*`, `*.vsctmp`, `*.swp`, `*~`) passam a ser ignorados por padrão — eram o gatilho do problema acima.

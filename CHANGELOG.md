@@ -1,3 +1,10 @@
+## 1.22.2 - 2026-07-22
+Robustez: a mesma classe de falha da 1.22.1, agora no SFTP — e uma correção no `sync`.
+
+* **Conexão morta no SFTP** — contrapartida da correção da 1.22.1. O `end()` derrubava a conexão sem registrar isso, e nada observava o canal SFTP (um canal sobre a conexão SSH, que o servidor pode fechar sozinho). Uma conexão encerrada continuava parecendo válida. Agora o estado é marcado diretamente, e o fechamento do canal também é observado.
+* **`sync` com `delete: true` não esperava as exclusões** — as remoções eram disparadas com `forEach` e as promises descartadas, então o `sync` terminava **com as exclusões ainda em andamento**: a notificação de progresso dizia "concluído" sobre trabalho em execução, e qualquer falha na exclusão virava um erro não tratado que **nunca chegava ao usuário** — uma exclusão que falhou parecia uma exclusão bem-sucedida. Agora elas são aguardadas junto com as transferências.
+* **Testes do algoritmo de sync** — o código mais destrutivo da extensão (`delete: true` apaga arquivos remotos) não tinha nenhum teste direto. Foi criada uma suíte que roda contra dois diretórios reais, cobrindo seleção de transferências, travessia e os caminhos destrutivos — incluindo a garantia de que um arquivo **ignorado no destino não é apagado**. Foi ela que revelou o bug acima.
+
 ## 1.22.1 - 2026-07-22
 Correção crítica: a conexão FTP não se recuperava mais depois de um único erro.
 
