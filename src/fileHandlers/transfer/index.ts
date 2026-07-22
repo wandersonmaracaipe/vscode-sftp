@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { refreshRemoteExplorer } from '../shared';
 import { upath, FileService, FileType, TransferScheduler, TransferTask } from '../../core';
-import { showConfirmMessage } from '../../host';
+import { showConfirmMessage, executeCommand, showTextDocument } from '../../host';
+import { COMMAND_DIFF } from '../../constants';
 import createFileHandler, { FileHandlerContext } from '../createFileHandler';
 import { transfer, sync, TransferOption, SyncOption, TransferDirection } from './transfer';
 
@@ -410,6 +411,119 @@ export const syncPreview2Remote = createFileHandler<SyncOption>({
   },
   afterHandle() {
     refreshRemoteExplorer(this.target, true);
+  },
+});
+
+// Compares a local folder against its remote counterpart and lists the
+// differences, without changing either side. Reuses the sync dry-run: a
+// Local ➞ Remote pass with delete+dryRun reports the local-side changes
+// (collected) and the remote-only entries (deleted) in one traversal.
+export const diffFolder = createFileHandler<SyncOption>({
+  name: 'diff folder',
+  async handle(option) {
+    const remoteFs = await this.fileService.getRemoteFileSystem(this.config);
+    const localFs = this.fileService.getLocalFileSystem();
+    const { localFsPath, remoteFsPath } = this.target;
+    const serviceName = this.fileService.name || 'remote';
+
+    const collected: TransferTask[] = [];
+    const deleted = await sync(
+      {
+        srcFsPath: localFsPath,
+        srcFs: localFs,
+        targetFsPath: remoteFsPath,
+        targetFs: remoteFs,
+        transferOption: { ...option, delete: true, dryRun: true },
+        transferDirection: TransferDirection.LOCAL_TO_REMOTE,
+      },
+      t => collected.push(t)
+    );
+
+    if (collected.length === 0 && deleted.length === 0) {
+      vscode.window.showInformationMessage(
+        `SFTP: a pasta local está idêntica ao remoto (${serviceName}). ✅`
+      );
+      return;
+    }
+
+    // `collected` mixes "only local" with "differs". A file's remote
+    // counterpart existing decides which — and whether a side-by-side diff even
+    // makes sense. Bounded so a wildly divergent tree can't fire thousands of
+    // stats; past the cap everything is shown without the distinction.
+    const CLASSIFY_LIMIT = 300;
+    const localItems = await Promise.all(
+      collected.map(async (t, i) => {
+        let onBoth = false;
+        if (i < CLASSIFY_LIMIT && t.fileType === FileType.File) {
+          try {
+            await remoteFs.lstat(t.targetFsPath);
+            onBoth = true;
+          } catch {
+            onBoth = false; // not on the remote — local-only
+          }
+        }
+        return { task: t, onBoth };
+      })
+    );
+
+    interface DiffPick extends vscode.QuickPickItem {
+      localPath?: string;
+      remotePath?: string;
+      diff?: boolean;
+    }
+
+    const items: DiffPick[] = [
+      ...localItems.map(({ task, onBoth }) => ({
+        label: `${onBoth ? '$(diff-modified)' : '$(diff-added)'} ${upath.basename(
+          task.srcFsPath
+        )}`,
+        description: task.srcFsPath,
+        detail: onBoth ? 'Diferente (local ↔ remoto)' : 'Apenas no local',
+        localPath: task.srcFsPath,
+        diff: onBoth,
+      })),
+      ...deleted.map(f => ({
+        label: `$(diff-removed) ${upath.basename(f.fspath)}`,
+        description: f.fspath,
+        detail: 'Apenas no remoto',
+        remotePath: f.fspath,
+      })),
+    ];
+
+    const summary = `${localItems.filter(i => i.onBoth).length} diferente(s) · ${
+      localItems.filter(i => !i.onBoth).length
+    } só local · ${deleted.length} só remoto`;
+
+    const pick = (await vscode.window.showQuickPick(items, {
+      placeHolder: `Diferenças com ${serviceName}: ${summary}`,
+      matchOnDescription: true,
+    })) as DiffPick | undefined;
+
+    if (!pick) {
+      return;
+    }
+
+    if (pick.diff && pick.localPath) {
+      // Open the existing side-by-side file diff for a differing file.
+      await executeCommand(COMMAND_DIFF, vscode.Uri.file(pick.localPath));
+    } else if (pick.localPath) {
+      await showTextDocument(vscode.Uri.file(pick.localPath));
+    }
+    // A remote-only entry has no local file to open; selecting it is just
+    // informational (its path is shown in the pick).
+  },
+  transformOption() {
+    const config = this.config;
+    const syncOption = config.syncOption || {};
+    return {
+      perserveTargetMode: false,
+      ignore: config.ignore,
+      // delete is forced on in handle() to surface remote-only entries; the
+      // dry run guarantees nothing is actually removed.
+      skipCreate: syncOption.skipCreate,
+      ignoreExisting: syncOption.ignoreExisting,
+      update: syncOption.update,
+    };
   },
 });
 

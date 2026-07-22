@@ -308,6 +308,11 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.diffFolder",
+        "title": "Comparar Pasta com o Remoto",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.diff.activeFile",
         "title": "Comparar Arquivo Ativo com o Remoto",
         "category": "SFTP"
@@ -610,6 +615,11 @@
           "command": "sftp.diff",
           "group": "3_compare",
           "when": "sftp.enabled && !explorerResourceIsRoot && !explorerResourceIsFolder"
+        },
+        {
+          "command": "sftp.diffFolder",
+          "group": "3_compare",
+          "when": "sftp.enabled && explorerResourceIsFolder"
         },
         {
           "command": "sftp.sync.localToRemote",

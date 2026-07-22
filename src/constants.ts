@@ -55,6 +55,7 @@ export const COMMAND_SYNC_PREVIEW = 'sftp.sync.preview';
 export const COMMAND_SYNC_PREVIEW_REMOTE_TO_LOCAL = 'sftp.sync.previewRemoteToLocal';
 
 export const COMMAND_DIFF = 'sftp.diff';
+export const COMMAND_DIFF_FOLDER = 'sftp.diffFolder';
 export const COMMAND_DIFF_ACTIVEFILE = 'sftp.diff.activeFile';
 export const COMMAND_LIST = 'sftp.list';
 export const COMMAND_LIST_ACTIVEFOLDER = 'sftp.listActiveFolder';
