@@ -54,10 +54,18 @@ export interface Config {
 export default abstract class RemoteClient {
   protected _client: any;
   protected _option: ConnectOption;
+  protected _closed: boolean = false;
 
   constructor(option: ConnectOption) {
     this._option = option;
     this._client = this._initClient();
+  }
+
+  // Whether this client is dead and every further request would fail. Asked
+  // before a pooled connection is handed out, because a disconnect event is not
+  // guaranteed to reach us — see FTPClient.isClosed().
+  isClosed(): boolean {
+    return this._closed;
   }
 
   abstract end(): void;
@@ -84,12 +92,15 @@ export default abstract class RemoteClient {
   onDisconnected(cb) {
     this._client
       .on('end', () => {
+        this._closed = true;
         cb('end');
       })
       .on('close', () => {
+        this._closed = true;
         cb('close');
       })
       .on('error', err => {
+        this._closed = true;
         cb('error');
       });
   }

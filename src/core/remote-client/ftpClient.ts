@@ -41,6 +41,7 @@ export default class FTPClient extends RemoteClient {
     // Notify listeners when the control connection drops so the pooled
     // filesystem can be invalidated and transparently reconnected on demand.
     const fire = (reason: string) => {
+      this._closed = true;
       this._disconnectHandlers.forEach(cb => cb(reason));
     };
     client.ftp.socket.once('close', () => fire('close'));
@@ -49,7 +50,26 @@ export default class FTPClient extends RemoteClient {
   }
 
   end() {
+    this._closed = true;
     this._client.close();
+  }
+
+  // Ask basic-ftp directly instead of trusting our socket listeners. When it
+  // closes a client after a task error it calls socket.removeAllListeners()
+  // BEFORE socket.destroy() (FtpContext._closeSocket), so the 'close' handler
+  // registered below is stripped and never fires. Relying on it alone left the
+  // pool serving a dead client forever: every later request failed with
+  // "Client is closed because ..." until the window was reloaded.
+  isClosed(): boolean {
+    if (this._closed) {
+      return true;
+    }
+    try {
+      return (this._client as Client).closed;
+    } catch {
+      // `closed` dereferences the socket, which may already be gone.
+      return true;
+    }
   }
 
   // Overrides RemoteClient.onDisconnected: basic-ftp's Client is not an

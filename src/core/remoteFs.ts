@@ -40,6 +40,15 @@ class KeepAliveRemoteFs {
       remoteTimeOffsetInHours: number;
     }
   ): Promise<RemoteFileSystem> {
+    // Don't trust `isValid` alone: it's only cleared by a disconnect event, and
+    // those aren't guaranteed to arrive (basic-ftp strips the socket listeners
+    // before destroying it). Ask the client whether it's actually usable, so a
+    // dead connection is replaced instead of served forever.
+    if (this.isValid && this.fs.isClosed()) {
+      logger.info('a conexão foi encerrada pelo servidor; reconectando…');
+      this.invalid('closed');
+    }
+
     if (this.isValid) {
       this.pendingPromise = null;
       return Promise.resolve(this.fs);

@@ -64,6 +64,10 @@ export default abstract class RemoteFileSystem extends FileSystem {
     this.client.onDisconnected(cb);
   }
 
+  isClosed(): boolean {
+    return this.client.isClosed();
+  }
+
   end() {
     this.client.end();
   }

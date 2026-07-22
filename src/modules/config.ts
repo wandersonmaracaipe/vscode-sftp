@@ -83,7 +83,10 @@ const defaultConfig = {
   downloadOnOpen: false,
   // Sensible defaults so heavy/transient folders aren't synced by accident.
   // (Set your own `ignore` in sftp.json to override this list.)
-  ignore: ['.vscode', '.git', '.DS_Store', 'node_modules'],
+  // The *.tmp.* / *.vsctmp entries cover the scratch files editors write during
+  // an atomic save: they exist for a few milliseconds and are renamed over the
+  // real file, so uploading them is always pointless and racy.
+  ignore: ['.vscode', '.git', '.DS_Store', 'node_modules', '*.tmp.*', '*.vsctmp', '*.swp', '*~'],
   // ignoreFile: undefined,
   // watcher: {
   //   files: false,
