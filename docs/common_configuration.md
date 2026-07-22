@@ -244,7 +244,7 @@ Quando você **não** define `ignore`, um padrão sensato é aplicado para evita
 
 | Key | Value | Default |
 | --- | --- | --- |
-| *ignore* | *string[]* | `['.vscode', '.git', '.DS_Store', 'node_modules']` |
+| *ignore* | *string[]* | `['.vscode', '.git', '.DS_Store', 'node_modules', '*.tmp.*', '*.vsctmp', '*.swp', '*~']` |
  
 ```json
 {

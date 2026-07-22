@@ -11,6 +11,10 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
+**Novidades da 1.22.1:**
+- **Correção crítica — "para de fazer upload"**: bastava **um** erro para a extensão parar de enviar até recarregar a janela. Quando o cliente FTP caía, o pool continuava entregando a conexão **morta** indefinidamente, e tudo falhava com `"Client is closed"`. Agora uma conexão morta é detectada e substituída automaticamente.
+- **Arquivos temporários de editor** (`*.tmp.*`, `*.vsctmp`, `*.swp`, `*~`) passam a ser ignorados por padrão — eram o gatilho do problema acima.
+
 **Novidades da 1.22.0:**
 - ⚠️ **Verificação da chave do servidor (`known_hosts`)** — correção de segurança importante: a extensão aceitava a chave de **qualquer** servidor SSH sem verificar, deixando toda conexão SFTP exposta a um ataque *man-in-the-middle*. Agora a chave é verificada; um host desconhecido mostra a impressão digital e pede confirmação, e uma chave **alterada** é sempre recusada. Configurável por `hostKeyChecking` (`"prompt"` | `"strict"` | `"off"`).
 - **Migração de senhas em texto plano** do `sftp.json` para o cofre do sistema.

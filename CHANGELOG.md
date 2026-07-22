@@ -1,3 +1,11 @@
+## 1.22.1 - 2026-07-22
+Correção crítica: a conexão FTP não se recuperava mais depois de um único erro.
+
+* **"Para de fazer upload" corrigido** — bastava **um** erro para a extensão parar de enviar até recarregar a janela. Quando o cliente FTP caía (por exemplo, um arquivo temporário do editor que some no meio do envio), o pool continuava entregando a **conexão morta** para sempre: todas as operações seguintes — envios, downloads e salvamentos — falhavam com o mesmo `"Client is closed because ..."`, por minutos a fio.
+  * Causa: a detecção de queda dependia dos eventos do socket, mas o `basic-ftp` chama `socket.removeAllListeners()` **antes** de destruir o socket ao encerrar por erro — nossos handlers eram removidos e nada era notificado. Agora o estado é consultado **diretamente** no cliente (`isClosed()`), sem depender da entrega de eventos, e uma conexão morta é substituída na operação seguinte.
+  * Isso também torna efetivo o *retry* por arquivo da 1.22.0 nesse cenário: antes, ele repetiria 3 vezes contra o mesmo cliente morto.
+* **Arquivos temporários de editor ignorados por padrão** — `*.tmp.*`, `*.vsctmp`, `*.swp` e `*~` entram na lista padrão de `ignore`. São arquivos que o editor cria durante o "salvamento atômico", existem por milissegundos e são renomeados por cima do arquivo real — enviá-los é sempre inútil e propenso a corrida. (Era o gatilho do problema acima.)
+
 ## 1.22.0 - 2026-07-14
 Blindagem: confiabilidade das transferências e segurança da conexão.
 
