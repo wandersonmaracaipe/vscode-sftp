@@ -71,6 +71,8 @@ export const COMMAND_TRANSFERHISTORY_RETRY_ALL_FAILED = 'sftp.transferHistory.re
 export const COMMAND_TRANSFERHISTORY_CLEAR = 'sftp.transferHistory.clear';
 export const COMMAND_TRANSFERHISTORY_REVEAL = 'sftp.transferHistory.reveal';
 
+export const COMMAND_REMOTEEXPLORER_SEARCH = 'sftp.remoteExplorer.search';
+
 export const COMMAND_REMOTEEXPLORER_REFRESH = 'sftp.remoteExplorer.refresh';
 export const COMMAND_REMOTEEXPLORER_REFRESH_ACTIVE_FILE = "sftp.remoteExplorer.refreshActiveFile"
 export const COMMAND_REMOTEEXPLORER_EDITINLOCAL = 'sftp.remoteExplorer.editInLocal';

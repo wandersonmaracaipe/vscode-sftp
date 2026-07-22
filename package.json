@@ -105,6 +105,12 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.remoteExplorer.search",
+        "title": "Buscar Arquivos Remotos",
+        "category": "SFTP",
+        "icon": "$(search)"
+      },
+      {
         "command": "sftp.transferHistory.retry",
         "title": "Repetir Transferência",
         "category": "SFTP",
@@ -679,9 +685,14 @@
       ],
       "view/title": [
         {
+          "command": "sftp.remoteExplorer.search",
+          "when": "view == remoteExplorer",
+          "group": "navigation@1"
+        },
+        {
           "command": "sftp.remoteExplorer.refresh",
           "when": "view == remoteExplorer",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "sftp.transferHistory.retryAllFailed",
@@ -699,6 +710,11 @@
           "command": "sftp.transferHistory.retry",
           "group": "inline",
           "when": "view == transferHistory && viewItem == failedTransfer"
+        },
+        {
+          "command": "sftp.remoteExplorer.search",
+          "group": "navigation",
+          "when": "view == remoteExplorer && viewItem == root"
         },
         {
           "command": "sftp.openConnectInTerminal",

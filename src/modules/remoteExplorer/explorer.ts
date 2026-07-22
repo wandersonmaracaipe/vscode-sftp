@@ -4,12 +4,13 @@ import {
   COMMAND_REMOTEEXPLORER_REFRESH,
   COMMAND_REMOTEEXPLORER_REFRESH_ACTIVE_FILE,
   COMMAND_REMOTEEXPLORER_VIEW_CONTENT,
+  COMMAND_REMOTEEXPLORER_SEARCH,
 } from '../../constants';
-import { UResource } from '../../core';
+import { upath, UResource } from '../../core';
 import { toRemotePath } from '../../helper';
 import { REMOTE_SCHEME } from '../../constants';
 import { getFileService } from '../serviceManager';
-import RemoteTreeDataProvider, { ExplorerItem } from './treeDataProvider';
+import RemoteTreeDataProvider, { ExplorerItem, ExplorerRoot } from './treeDataProvider';
 
 export default class RemoteExplorer {
   private _explorerView: vscode.TreeView<ExplorerItem>;
@@ -32,6 +33,74 @@ export default class RemoteExplorer {
     registerCommand(context, COMMAND_REMOTEEXPLORER_VIEW_CONTENT, (item: ExplorerItem) =>
       this._treeDataProvider.showItem(item)
     );
+    registerCommand(context, COMMAND_REMOTEEXPLORER_SEARCH, (item?: ExplorerItem) =>
+      this._search(item)
+    );
+  }
+
+  private async _pickRoot(item?: ExplorerItem): Promise<ExplorerRoot | undefined> {
+    if (item) {
+      const root = this._treeDataProvider.findRoot(item.resource.uri);
+      if (root) {
+        return root;
+      }
+    }
+
+    const roots = this._treeDataProvider.getRoots();
+    if (roots.length === 0) {
+      vscode.window.showInformationMessage('SFTP: Nenhuma configuração encontrada.');
+      return undefined;
+    }
+    if (roots.length === 1) {
+      return roots[0];
+    }
+
+    const pick = await vscode.window.showQuickPick(
+      roots.map(root => ({
+        label: root.explorerContext.fileService.name || root.explorerContext.config.host,
+        description: root.explorerContext.config.remotePath,
+        root,
+      })),
+      { placeHolder: 'Buscar em qual conexão?' }
+    );
+    return pick && pick.root;
+  }
+
+  private async _search(item?: ExplorerItem) {
+    const root = await this._pickRoot(item);
+    if (!root) {
+      return;
+    }
+
+    const remoteRoot = root.resource.fsPath;
+    const collected = await vscode.window.withProgress(
+      { location: { viewId: 'remoteExplorer' }, title: 'Buscando arquivos remotos…' },
+      () => this._treeDataProvider.collectFiles(root)
+    );
+
+    if (collected.files.length === 0) {
+      vscode.window.showInformationMessage('SFTP: nenhum arquivo encontrado para buscar.');
+      return;
+    }
+
+    const items = collected.files.map(resource => ({
+      label: `$(file) ${upath.basename(resource.fsPath)}`,
+      // Path relative to the remote root, so the matcher works on it too.
+      description: upath.relative(remoteRoot, resource.fsPath),
+      resource,
+    }));
+
+    const placeHolder = collected.truncated
+      ? `Digite para filtrar (mostrando os primeiros ${items.length}, refine a busca navegando até uma subpasta)`
+      : `Digite para filtrar ${items.length} arquivo(s)`;
+
+    const pick = await vscode.window.showQuickPick(items, {
+      placeHolder,
+      matchOnDescription: true,
+    });
+    if (pick) {
+      this._treeDataProvider.openResource(pick.resource);
+    }
   }
 
   refresh(item?: ExplorerItem) {

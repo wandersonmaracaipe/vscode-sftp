@@ -254,6 +254,73 @@ export default class RemoteTreeData
     showTextDocument(makePreivewUrl(item.resource.uri));
   }
 
+  getRoots(): ExplorerRoot[] {
+    return this._getRoots();
+  }
+
+  // Walks a root's remote tree breadth-first, collecting files. Bounded on both
+  // node count and depth so a search over a huge or deep remote can't hang the
+  // UI or hammer the server; the caller is told when the cap was hit. Honours
+  // the same filesExclude rules the tree view uses, so search results match
+  // what's browsable.
+  async collectFiles(
+    root: ExplorerRoot,
+    { maxEntries = 5000, maxDepth = 12 }: { maxEntries?: number; maxDepth?: number } = {}
+  ): Promise<{ files: Resource[]; truncated: boolean }> {
+    const config = root.explorerContext.config;
+    const remotefs = await root.explorerContext.fileService.getRemoteFileSystem(config);
+
+    const filesExcludeList: string[] =
+      config.remoteExplorer && config.remoteExplorer.filesExclude
+        ? config.remoteExplorer.filesExclude.concat(DEFAULT_FILES_EXCLUDE)
+        : DEFAULT_FILES_EXCLUDE;
+    const ignore = new Ignore(filesExcludeList);
+    const isIgnored = (fspath: string) =>
+      ignore.ignores(upath.relative(config.remotePath, fspath));
+
+    const files: Resource[] = [];
+    let queue: Array<{ fspath: string; depth: number }> = [
+      { fspath: root.resource.fsPath, depth: 0 },
+    ];
+
+    while (queue.length) {
+      const next: typeof queue = [];
+      for (const { fspath, depth } of queue) {
+        let entries: FileEntry[];
+        try {
+          entries = await remotefs.list(fspath);
+        } catch {
+          continue; // unreadable dir — skip rather than abort the whole search
+        }
+
+        for (const entry of entries) {
+          if (isIgnored(entry.fspath)) {
+            continue;
+          }
+          if (entry.type === FileType.Directory) {
+            if (depth < maxDepth) {
+              next.push({ fspath: entry.fspath, depth: depth + 1 });
+            }
+          } else {
+            files.push(
+              UResource.updateResource(root.resource, { remotePath: entry.fspath })
+            );
+            if (files.length >= maxEntries) {
+              return { files, truncated: true };
+            }
+          }
+        }
+      }
+      queue = next;
+    }
+
+    return { files, truncated: false };
+  }
+
+  openResource(resource: Resource): void {
+    showTextDocument(makePreivewUrl(resource.uri));
+  }
+
   private _getRoots(): ExplorerRoot[] {
     if (this._roots) {
       return this._roots;
