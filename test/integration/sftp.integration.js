@@ -95,6 +95,93 @@ describe('SFTPFileSystem integration (ssh2)', () => {
   });
 });
 
+// Counterpart to the FTP dead-connection suite. The SFTP subsystem is a channel
+// on top of the SSH connection and can die on its own, so a live SSH client is
+// not proof that the filesystem still works. If that goes undetected the pool
+// keeps serving a filesystem whose every request fails.
+describe('SFTP dead-connection detection', () => {
+  let server;
+  let port;
+  let root;
+  let remoteFs;
+
+  const connectOption = () => ({
+    host: '127.0.0.1',
+    port,
+    username: 'tester',
+    password: 'test',
+    protocol: 'sftp',
+    connectTimeout: 8000,
+    hostKeyChecking: 'off',
+  });
+
+  const connect = async () => {
+    const option = connectOption();
+    const fsys = new SFTPFileSystem(upath, {
+      clientOption: option,
+      remoteTimeOffsetInHours: 0,
+    });
+    await fsys.connect(option, { askForPasswd: () => Promise.resolve('test') });
+    return fsys;
+  };
+
+  beforeAll(async () => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'sftp-dead-'));
+    fs.writeFileSync(path.join(root, 'existing.txt'), 'hello');
+    const started = await startSftpServer(root);
+    server = started.server;
+    port = started.port;
+  });
+
+  afterAll(async () => {
+    try {
+      server.close();
+    } catch (e) {
+      // already closed
+    }
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  beforeEach(async () => {
+    remoteFs = await connect();
+  });
+
+  test('a live connection reports itself as open', async () => {
+    expect(remoteFs.isClosed()).toBe(false);
+    await remoteFs.lstat('/existing.txt'); // still usable
+  });
+
+  test('end() marks the connection closed', () => {
+    remoteFs.end();
+    expect(remoteFs.isClosed()).toBe(true);
+  });
+
+  test('a dropped connection is detected', async () => {
+    const client = remoteFs.getClient();
+    await remoteFs.lstat('/existing.txt'); // healthy to begin with
+
+    // How a connection really dies: the transport goes away (network blip, or
+    // the server dropping an idle session). ssh2 then closes the SFTP channel
+    // riding on top of it.
+    await new Promise(resolve => {
+      client.getFsClient().once('close', resolve);
+      client._client._sock.destroy();
+    });
+
+    expect(remoteFs.isClosed()).toBe(true);
+  });
+
+  test('a fresh connection after a kill is usable again', async () => {
+    remoteFs.end();
+    expect(remoteFs.isClosed()).toBe(true);
+
+    const replacement = await connect();
+    expect(replacement.isClosed()).toBe(false);
+    expect((await replacement.lstat('/existing.txt')).size).toBe('hello'.length);
+    replacement.end();
+  });
+});
+
 // The server's key is generated per run, so it stands in for any host that isn't
 // in known_hosts yet — exactly the case the verifier has to get right.
 describe('SFTP host key verification', () => {

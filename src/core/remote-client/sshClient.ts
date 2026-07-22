@@ -100,6 +100,17 @@ export default class SSHClient extends RemoteClient {
     await this._connectSSHClient(this._client, { ...lastOption, sock }, config);
     this.sftp = await this._getSftp(this._client);
 
+    // The SFTP subsystem is a channel on top of the SSH connection and can die
+    // on its own — a server may close an idle channel while the connection
+    // stays up. Without this the client would still look alive and the pool
+    // would keep handing out a filesystem whose every request fails.
+    this.sftp.once('close', () => {
+      this._closed = true;
+    });
+    this.sftp.once('end', () => {
+      this._closed = true;
+    });
+
     if (lastOption.limitOpenFilesOnRemote) {
       if (typeof lastOption.limitOpenFilesOnRemote !== 'boolean') {
         MAX_OPEN_FD_NUM = Math.max(127, lastOption.limitOpenFilesOnRemote);
@@ -448,6 +459,9 @@ export default class SSHClient extends RemoteClient {
   }
 
   end() {
+    // Set before ending so the state is correct even if ssh2 never emits
+    // 'close' (see FTPClient.isClosed for why we don't trust that alone).
+    this._closed = true;
     this._client.end();
 
     if (this.hoppingClients) {
