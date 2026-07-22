@@ -258,6 +258,25 @@ export default class RemoteTreeData
     return this._getRoots();
   }
 
+  findRootById(id: Id): ExplorerRoot | undefined {
+    this._getRoots(); // ensure the roots map is populated
+    return this._rootsMap ? this._rootsMap.get(id) : undefined;
+  }
+
+  // Builds a tree item for an arbitrary remote path under a known root, so a
+  // saved favorite can be revealed/opened without the user having navigated to
+  // it first.
+  resourceItem(root: ExplorerRoot, fsPath: string, isDirectory: boolean): ExplorerItem {
+    const resource = UResource.updateResource(root.resource, { remotePath: fsPath });
+    const existing = this._map.get(resource.uri.query);
+    if (existing) {
+      return existing;
+    }
+    const item = { resource, isDirectory };
+    this._map.set(resource.uri.query, item);
+    return item;
+  }
+
   // Walks a root's remote tree breadth-first, collecting files. Bounded on both
   // node count and depth so a search over a huge or deep remote can't hang the
   // UI or hammer the server; the caller is told when the cap was hit. Honours

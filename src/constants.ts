@@ -72,6 +72,9 @@ export const COMMAND_TRANSFERHISTORY_CLEAR = 'sftp.transferHistory.clear';
 export const COMMAND_TRANSFERHISTORY_REVEAL = 'sftp.transferHistory.reveal';
 
 export const COMMAND_REMOTEEXPLORER_SEARCH = 'sftp.remoteExplorer.search';
+export const COMMAND_REMOTEEXPLORER_ADD_FAVORITE = 'sftp.remoteExplorer.addFavorite';
+export const COMMAND_REMOTEEXPLORER_REMOVE_FAVORITE = 'sftp.remoteExplorer.removeFavorite';
+export const COMMAND_REMOTEEXPLORER_OPEN_FAVORITE = 'sftp.remoteExplorer.openFavorite';
 
 export const COMMAND_REMOTEEXPLORER_REFRESH = 'sftp.remoteExplorer.refresh';
 export const COMMAND_REMOTEEXPLORER_REFRESH_ACTIVE_FILE = "sftp.remoteExplorer.refreshActiveFile"

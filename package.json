@@ -111,6 +111,23 @@
         "icon": "$(search)"
       },
       {
+        "command": "sftp.remoteExplorer.addFavorite",
+        "title": "Adicionar aos Favoritos",
+        "category": "SFTP",
+        "icon": "$(star-empty)"
+      },
+      {
+        "command": "sftp.remoteExplorer.openFavorite",
+        "title": "Abrir Favorito Remoto",
+        "category": "SFTP",
+        "icon": "$(star-full)"
+      },
+      {
+        "command": "sftp.remoteExplorer.removeFavorite",
+        "title": "Remover Favorito Remoto",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.transferHistory.retry",
         "title": "Repetir Transferência",
         "category": "SFTP",
@@ -370,6 +387,22 @@
     ],
     "menus": {
       "commandPalette": [
+        {
+          "command": "sftp.remoteExplorer.addFavorite",
+          "when": "false"
+        },
+        {
+          "command": "sftp.remoteExplorer.openFavorite",
+          "when": "sftp.enabled"
+        },
+        {
+          "command": "sftp.remoteExplorer.removeFavorite",
+          "when": "sftp.enabled"
+        },
+        {
+          "command": "sftp.remoteExplorer.search",
+          "when": "sftp.enabled"
+        },
         {
           "command": "sftp.transferHistory.retry",
           "when": "false"
@@ -690,9 +723,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "sftp.remoteExplorer.refresh",
+          "command": "sftp.remoteExplorer.openFavorite",
           "when": "view == remoteExplorer",
           "group": "navigation@2"
+        },
+        {
+          "command": "sftp.remoteExplorer.refresh",
+          "when": "view == remoteExplorer",
+          "group": "navigation@3"
         },
         {
           "command": "sftp.transferHistory.retryAllFailed",
@@ -715,6 +753,11 @@
           "command": "sftp.remoteExplorer.search",
           "group": "navigation",
           "when": "view == remoteExplorer && viewItem == root"
+        },
+        {
+          "command": "sftp.remoteExplorer.addFavorite",
+          "group": "1_fav",
+          "when": "view == remoteExplorer && (viewItem == folder || viewItem == file)"
         },
         {
           "command": "sftp.openConnectInTerminal",

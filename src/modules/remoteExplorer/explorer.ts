@@ -5,11 +5,20 @@ import {
   COMMAND_REMOTEEXPLORER_REFRESH_ACTIVE_FILE,
   COMMAND_REMOTEEXPLORER_VIEW_CONTENT,
   COMMAND_REMOTEEXPLORER_SEARCH,
+  COMMAND_REMOTEEXPLORER_ADD_FAVORITE,
+  COMMAND_REMOTEEXPLORER_REMOVE_FAVORITE,
+  COMMAND_REMOTEEXPLORER_OPEN_FAVORITE,
 } from '../../constants';
 import { upath, UResource } from '../../core';
 import { toRemotePath } from '../../helper';
 import { REMOTE_SCHEME } from '../../constants';
 import { getFileService } from '../serviceManager';
+import {
+  addFavorite,
+  removeFavorite,
+  getFavorites,
+  Favorite,
+} from '../remoteFavorites';
 import RemoteTreeDataProvider, { ExplorerItem, ExplorerRoot } from './treeDataProvider';
 
 export default class RemoteExplorer {
@@ -36,6 +45,82 @@ export default class RemoteExplorer {
     registerCommand(context, COMMAND_REMOTEEXPLORER_SEARCH, (item?: ExplorerItem) =>
       this._search(item)
     );
+    registerCommand(context, COMMAND_REMOTEEXPLORER_ADD_FAVORITE, (item: ExplorerItem) =>
+      this._addFavorite(item)
+    );
+    registerCommand(context, COMMAND_REMOTEEXPLORER_REMOVE_FAVORITE, () =>
+      this._removeFavorite()
+    );
+    registerCommand(context, COMMAND_REMOTEEXPLORER_OPEN_FAVORITE, () => this._openFavorite());
+  }
+
+  private async _addFavorite(item: ExplorerItem) {
+    if (!item) {
+      return;
+    }
+    const root = this._treeDataProvider.findRoot(item.resource.uri);
+    if (!root) {
+      return;
+    }
+    const fsPath = item.resource.fsPath;
+    const connName = root.explorerContext.fileService.name || root.explorerContext.config.host;
+    const favorite: Favorite = {
+      remoteId: root.explorerContext.id,
+      fsPath,
+      isDirectory: item.isDirectory,
+      label: `${connName}: ${upath.basename(fsPath) || fsPath}`,
+    };
+    await addFavorite(favorite);
+    vscode.window.showInformationMessage(`SFTP: adicionado aos favoritos — ${favorite.label} ⭐`);
+  }
+
+  private async _pickFavorite(placeHolder: string): Promise<Favorite | undefined> {
+    const favorites = getFavorites();
+    if (favorites.length === 0) {
+      vscode.window.showInformationMessage('SFTP: nenhum favorito salvo ainda.');
+      return undefined;
+    }
+    const pick = await vscode.window.showQuickPick(
+      favorites.map(favorite => ({
+        label: `${favorite.isDirectory ? '$(folder)' : '$(file)'} ${favorite.label}`,
+        description: favorite.fsPath,
+        favorite,
+      })),
+      { placeHolder }
+    );
+    return pick && pick.favorite;
+  }
+
+  private async _openFavorite() {
+    const favorite = await this._pickFavorite('Abrir favorito remoto');
+    if (!favorite) {
+      return;
+    }
+
+    const root = this._treeDataProvider.findRootById(favorite.remoteId);
+    if (!root) {
+      vscode.window.showWarningMessage(
+        `SFTP: a conexão do favorito "${favorite.label}" não existe mais.`
+      );
+      return;
+    }
+
+    const item = this._treeDataProvider.resourceItem(root, favorite.fsPath, favorite.isDirectory);
+    if (favorite.isDirectory) {
+      // Reveal and expand the folder in the tree.
+      await this._explorerView.reveal(item, { expand: true, select: true });
+    } else {
+      this._treeDataProvider.openResource(item.resource);
+    }
+  }
+
+  private async _removeFavorite() {
+    const favorite = await this._pickFavorite('Remover favorito remoto');
+    if (!favorite) {
+      return;
+    }
+    await removeFavorite(favorite.remoteId, favorite.fsPath);
+    vscode.window.showInformationMessage(`SFTP: favorito removido — ${favorite.label}`);
   }
 
   private async _pickRoot(item?: ExplorerItem): Promise<ExplorerRoot | undefined> {

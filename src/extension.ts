@@ -13,6 +13,7 @@ import { initSecretStorage } from './modules/secretStorage';
 import { initTransferStatusBar } from './modules/transferStatusBar';
 import { initTransferHistory } from './modules/transferHistory';
 import { initPasswordMigration, checkPlaintextPasswords } from './modules/passwordMigration';
+import { initRemoteFavorites } from './modules/remoteFavorites';
 import RemoteExplorer from './modules/remoteExplorer';
 
 async function setupWorkspaceFolder(dir) {
@@ -36,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
   initTransferStatusBar(context);
   initTransferHistory(context);
   initPasswordMigration(context);
+  initRemoteFavorites(context);
 
   try {
     initCommands(context);
