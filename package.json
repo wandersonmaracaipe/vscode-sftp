@@ -888,6 +888,9 @@
     "testMatch": [
       "<rootDir>/test/**/*.spec.js",
       "<rootDir>/**/*/__tests__/*.ts"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^vscode$": "<rootDir>/test/mocks/vscode.js"
+    }
   }
 }

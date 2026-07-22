@@ -372,10 +372,18 @@ async function _sync(
     }
 
     // side-effect (skipped on a dry run — the removals are still reported via `deleted`)
-    if (!transferOption.dryRun) {
-      fileMissed.forEach(file => removeFile(file, targetFs, FileType.File, transferOption));
-      dirMissed.forEach(file => removeFile(file, targetFs, FileType.Directory, transferOption));
-    }
+    // These are awaited along with the transfers below. Firing them without
+    // keeping the promises let sync() resolve while removals were still running
+    // — a recursive directory removal would routinely outlive the "finished"
+    // report — and turned any failure into an unhandled rejection the user
+    // never saw. Extraneous entries are disjoint from the transferred ones, so
+    // running both concurrently is safe.
+    const removePromise = transferOption.dryRun
+      ? []
+      : [
+          ...fileMissed.map(file => removeFile(file, targetFs, FileType.File, transferOption)),
+          ...dirMissed.map(file => removeFile(file, targetFs, FileType.Directory, transferOption)),
+        ];
 
     const transFilePromise = file2trans.map(([src, target, direction, option]) =>
       transferFile(
@@ -414,7 +422,12 @@ async function _sync(
       )
     );
 
-    return Promise.all([...transFilePromise, ...transDirPromise, ...syncPromise]).then(flatten);
+    return Promise.all([
+      ...removePromise,
+      ...transFilePromise,
+      ...transDirPromise,
+      ...syncPromise,
+    ]).then(flatten);
   };
 
   // create dir here so we don't have to ensure it for children files.
