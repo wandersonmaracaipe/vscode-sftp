@@ -11,6 +11,11 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
+**Novidades da 1.23.0:**
+- **Remote Explorer**: busca de arquivos remotos, favoritos, arrastar-e-soltar para enviar, e "Comparar Pasta com o Remoto".
+- **Preview de Sincronização (Remoto → Local)** — o dry-run agora nos dois sentidos.
+- **Exclusões por perfil** (`ignore` do perfil é somado ao da raiz).
+
 **Novidades da 1.22.2:**
 - **Conexão morta no SFTP** — mesma correção da 1.22.1, agora para SFTP: uma conexão encerrada continuava parecendo válida.
 - **`sync` com `delete: true`** — o sync terminava com as exclusões ainda em andamento, e uma exclusão que falhava parecia bem-sucedida. Agora são aguardadas.
@@ -56,16 +61,19 @@ O Valuor SFTP permite adicionar, editar ou excluir arquivos em um diretório loc
 
 - Recursos
   - [Navegar no remoto com o Remote Explorer](#remote-explorer)
-  - _Diff_ entre local e remoto
-  - Sincronizar diretórios
+  - Buscar arquivos no remoto, favoritos e arrastar-e-soltar para enviar
+  - _Diff_ entre local e remoto (arquivo e pasta)
+  - Sincronizar diretórios (com preview dry-run nos dois sentidos)
   - Enviar/Baixar (Upload/Download)
   - Enviar ao salvar (_upload on save_)
   - _File Watcher_
   - Múltiplas configurações
-  - Perfis alternáveis
+  - Perfis alternáveis (com exclusões por perfil)
   - Suporte a arquivo temporário
+  - Verificação de host key (`known_hosts`) e senhas/passphrases no cofre
   - Confirmação modal antes de excluir no remoto
   - Barra de progresso cancelável em transferências
+  - Histórico de transferências com "Repetir"
   - Indicador de conexão na barra de status
 - [Comandos](docs/commands.md)
 - [Depuração](#depuração)
@@ -190,6 +198,8 @@ Você pode ver a lista completa de opções de configuração [aqui](docs/config
 _Observação:_ `context` e `watcher` só estão disponíveis no nível raiz.
 
 Use `SFTP: Set Profile` para alternar de perfil.
+
+_Exclusões por perfil:_ um perfil pode definir seu próprio `ignore` — ele é **somado** ao `ignore` da raiz (não substitui). Assim dá para excluir algo apenas em `prod`, por exemplo, mantendo as exclusões comuns na raiz.
 
 ### Múltiplos contextos
 Os contextos **não podem ser iguais**.

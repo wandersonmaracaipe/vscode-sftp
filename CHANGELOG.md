@@ -1,3 +1,16 @@
+## 1.23.0 - 2026-07-22
+Remote Explorer e sincronização mais capazes.
+
+### Remote Explorer
+* **Buscar arquivos remotos** — um ícone de lupa na barra do Remote Explorer (e no menu de uma conexão) percorre a árvore remota e abre um seletor filtrável; escolher um arquivo o abre. A varredura é limitada (5000 entradas, 12 níveis) para não travar em remotos enormes.
+* **Favoritos** — **"Adicionar aos Favoritos"** em qualquer arquivo ou pasta remota; uma estrela na barra abre um favorito (arquivo abre no editor, pasta é revelada e expandida na árvore). Os favoritos são por workspace.
+* **Arrastar e soltar para enviar** — arraste arquivos/pastas do gerenciador do sistema ou do próprio explorer do VS Code e solte sobre uma pasta remota para enviá-los ali.
+* **Comparar Pasta com o Remoto** — lista as diferenças entre uma pasta local e o remoto (diferentes, só local, só remoto), sem alterar nada; escolher um arquivo diferente abre o diff lado a lado.
+
+### Sincronização
+* **Preview de Sincronização (Remoto → Local)** — o preview dry-run, que só existia para Local → Remoto, agora também existe para o outro sentido: veja o que seria baixado/excluído localmente antes de aplicar.
+* **Exclusões por perfil** — um perfil pode definir seu próprio `ignore`, que é **somado** ao da raiz (documentado). Permite excluir algo apenas em um perfil específico.
+
 ## 1.22.2 - 2026-07-22
 Robustez: a mesma classe de falha da 1.22.1, agora no SFTP — e uma correção no `sync`.
 
