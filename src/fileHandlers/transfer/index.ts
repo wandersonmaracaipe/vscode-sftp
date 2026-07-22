@@ -1,6 +1,13 @@
 import * as vscode from 'vscode';
 import { refreshRemoteExplorer } from '../shared';
-import { upath, FileService, FileType, TransferScheduler, TransferTask } from '../../core';
+import {
+  upath,
+  FileService,
+  FileType,
+  ServiceConfig,
+  TransferScheduler,
+  TransferTask,
+} from '../../core';
 import { showConfirmMessage, executeCommand, showTextDocument } from '../../host';
 import { COMMAND_DIFF } from '../../constants';
 import createFileHandler, { FileHandlerContext } from '../createFileHandler';
@@ -388,6 +395,51 @@ async function previewAndApplySync(
     bytes,
     totalBytes
   );
+}
+
+// Uploads a local file or folder to an explicit remote path, independent of the
+// configured local↔remote mapping. Used by the Remote Explorer's drag-and-drop,
+// where the drop target dictates the destination. Returns how many top-level
+// items were sent so the caller can report it.
+export async function uploadPathToRemote(
+  fileService: FileService,
+  config: ServiceConfig,
+  localFsPath: string,
+  remoteFsPath: string
+): Promise<void> {
+  const remoteFs = await fileService.getRemoteFileSystem(config);
+  const localFs = fileService.getLocalFileSystem();
+  const scheduler = fileService.createTransferScheduler(config.concurrency);
+  const bytes = { transferred: 0 };
+  let totalBytes = 0;
+
+  const option: TransferOption = {
+    perserveTargetMode: config.protocol === 'sftp' && !config.filePerm && !config.dirPerm,
+    useTempFile: config.useTempFile,
+    openSsh: config.openSsh,
+    ignore: config.ignore,
+    onProgress: (delta: number) => {
+      bytes.transferred += delta;
+    },
+  };
+
+  await transfer(
+    {
+      srcFsPath: localFsPath,
+      srcFs: localFs,
+      targetFsPath: remoteFsPath,
+      targetFs: remoteFs,
+      transferOption: option,
+      filePerm: config.filePerm,
+      dirPerm: config.dirPerm,
+      transferDirection: TransferDirection.LOCAL_TO_REMOTE,
+    },
+    t => {
+      totalBytes += t.fileSize;
+      scheduler.add(t);
+    }
+  );
+  await runSchedulerWithProgress(scheduler, fileService, 'SFTP: Enviando', bytes, totalBytes);
 }
 
 export const syncPreview2Remote = createFileHandler<SyncOption>({

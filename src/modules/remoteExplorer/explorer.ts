@@ -13,6 +13,7 @@ import { upath, UResource } from '../../core';
 import { toRemotePath } from '../../helper';
 import { REMOTE_SCHEME } from '../../constants';
 import { getFileService } from '../serviceManager';
+import { uploadPathToRemote } from '../../fileHandlers';
 import {
   addFavorite,
   removeFavorite,
@@ -20,6 +21,88 @@ import {
   Favorite,
 } from '../remoteFavorites';
 import RemoteTreeDataProvider, { ExplorerItem, ExplorerRoot } from './treeDataProvider';
+
+// Accepts files dragged from the OS file manager or VS Code's own explorer
+// (both expose `text/uri-list`) and uploads them into the remote folder they
+// were dropped on. It does not originate drags, so dragMimeTypes is empty.
+class RemoteDragAndDropController implements vscode.TreeDragAndDropController<ExplorerItem> {
+  readonly dropMimeTypes = ['text/uri-list'];
+  readonly dragMimeTypes = [];
+
+  constructor(
+    private readonly treeDataProvider: RemoteTreeDataProvider,
+    private readonly onDidUpload: (target: ExplorerItem) => void
+  ) {}
+
+  async handleDrop(
+    target: ExplorerItem | undefined,
+    dataTransfer: vscode.DataTransfer,
+    _token: vscode.CancellationToken
+  ): Promise<void> {
+    if (!target) {
+      vscode.window.showInformationMessage(
+        'SFTP: solte sobre uma pasta ou conexão remota para enviar.'
+      );
+      return;
+    }
+
+    const root = this.treeDataProvider.findRoot(target.resource.uri);
+    if (!root) {
+      return;
+    }
+
+    const item = dataTransfer.get('text/uri-list');
+    if (!item) {
+      return;
+    }
+
+    const localPaths = (await item.asString())
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'))
+      .map(line => {
+        try {
+          const uri = vscode.Uri.parse(line, true);
+          return uri.scheme === 'file' ? uri.fsPath : undefined;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((p): p is string => !!p);
+
+    if (localPaths.length === 0) {
+      return;
+    }
+
+    // Drop onto a file targets its containing folder, not the file itself.
+    const destFolder = target.isDirectory
+      ? target.resource.fsPath
+      : upath.dirname(target.resource.fsPath);
+    const { fileService, config } = root.explorerContext;
+
+    let sent = 0;
+    for (const localPath of localPaths) {
+      const remotePath = upath.join(destFolder, upath.basename(localPath));
+      try {
+        await uploadPathToRemote(fileService, config, localPath, remotePath);
+        sent += 1;
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          `SFTP: falha ao enviar ${upath.basename(localPath)}: ${error && error.message}`
+        );
+      }
+    }
+
+    if (sent > 0) {
+      vscode.window.showInformationMessage(
+        sent > 1
+          ? `SFTP: ${sent} itens enviados para ${destFolder}.`
+          : `SFTP: enviado para ${destFolder}.`
+      );
+      this.onDidUpload(target);
+    }
+  }
+}
 
 export default class RemoteExplorer {
   private _explorerView: vscode.TreeView<ExplorerItem>;
@@ -35,6 +118,9 @@ export default class RemoteExplorer {
       showCollapseAll: true,
       treeDataProvider: this._treeDataProvider,
       canSelectMany: true,
+      dragAndDropController: new RemoteDragAndDropController(this._treeDataProvider, item =>
+        this.refresh(item)
+      ),
     });
 
     registerCommand(context, COMMAND_REMOTEEXPLORER_REFRESH, () => this._refreshSelection());
