@@ -275,6 +275,11 @@
         "category": "SFTP"
       },
       {
+        "command": "sftp.sync.previewRemoteToLocal",
+        "title": "Preview de Sincronização (Remoto → Local)",
+        "category": "SFTP"
+      },
+      {
         "command": "sftp.diff",
         "title": "Comparar com o Remoto",
         "category": "SFTP"
@@ -456,6 +461,10 @@
           "when": "sftp.enabled"
         },
         {
+          "command": "sftp.sync.previewRemoteToLocal",
+          "when": "sftp.enabled"
+        },
+        {
           "command": "sftp.diff.activeFile",
           "when": "sftp.enabled"
         },
@@ -581,6 +590,11 @@
         {
           "command": "sftp.sync.preview",
           "group": "sftp.sync@4",
+          "when": "sftp.enabled && explorerResourceIsFolder"
+        },
+        {
+          "command": "sftp.sync.previewRemoteToLocal",
+          "group": "sftp.sync@5",
           "when": "sftp.enabled && explorerResourceIsFolder"
         },
         {

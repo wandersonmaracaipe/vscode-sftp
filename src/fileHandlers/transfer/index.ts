@@ -300,81 +300,99 @@ export const sync2Local = createFileHandler<SyncOption>({
   },
 });
 
-// Dry-run preview of a Local ➞ Remote sync: lists what would be uploaded and
-// deleted without touching the remote, then offers to apply the sync.
+// Dry-run preview of a sync in either direction: collects what would change
+// without touching either side, lets the user review it, and applies it only on
+// confirmation. Shared by the Local ➞ Remote and Remote ➞ Local previews so the
+// two stay identical apart from direction and wording.
+async function previewAndApplySync(
+  ctx: FileHandlerContext,
+  option: SyncOption,
+  direction: TransferDirection
+) {
+  const remoteFs = await ctx.fileService.getRemoteFileSystem(ctx.config);
+  const localFs = ctx.fileService.getLocalFileSystem();
+  const { localFsPath, remoteFsPath } = ctx.target;
+  const toRemote = direction === TransferDirection.LOCAL_TO_REMOTE;
+
+  const buildConfig = (dryRun: boolean) => ({
+    srcFsPath: toRemote ? localFsPath : remoteFsPath,
+    srcFs: toRemote ? localFs : remoteFs,
+    targetFsPath: toRemote ? remoteFsPath : localFsPath,
+    targetFs: toRemote ? remoteFs : localFs,
+    transferOption: { ...option, dryRun },
+    transferDirection: direction,
+  });
+
+  const arrow = toRemote ? 'local ➞ remoto' : 'remoto ➞ local';
+  const sendVerb = toRemote ? 'Enviar' : 'Baixar';
+  const deleteWhere = toRemote ? 'Excluir no remoto' : 'Excluir no local';
+  const sendIcon = toRemote ? '$(arrow-up)' : '$(arrow-down)';
+
+  const collected: TransferTask[] = [];
+  const deleted = await sync(buildConfig(true), t => collected.push(t));
+
+  if (collected.length === 0 && deleted.length === 0) {
+    vscode.window.showInformationMessage(`SFTP: nada para sincronizar (${arrow}). ✅`);
+    return;
+  }
+
+  const changes: vscode.QuickPickItem[] = [
+    ...collected.map(t => ({
+      label: `${sendIcon} ${upath.basename(t.targetFsPath)}`,
+      description: t.targetFsPath,
+      detail: sendVerb,
+    })),
+    ...deleted.map(f => ({
+      label: `$(trash) ${upath.basename(f.fspath)}`,
+      description: f.fspath,
+      detail: deleteWhere,
+    })),
+  ];
+
+  const APPLY = '$(check) Aplicar sincronização';
+  const summary = `${collected.length} ${toRemote ? 'envio(s)' : 'download(s)'} · ${
+    deleted.length
+  } exclusão(ões)`;
+  const pick = await vscode.window.showQuickPick(
+    [{ label: APPLY, description: summary }, ...changes],
+    {
+      placeHolder: `Preview ${arrow}: ${summary}. Escolha "Aplicar" para sincronizar.`,
+      matchOnDescription: true,
+    }
+  );
+
+  if (!pick || pick.label !== APPLY) {
+    return;
+  }
+
+  // Apply for real.
+  const scheduler = ctx.fileService.createTransferScheduler(ctx.config.concurrency);
+  const bytes = { transferred: 0 };
+  let totalBytes = 0;
+  if (toRemote) {
+    option.filePerm = ctx.config.filePerm;
+    option.dirPerm = ctx.config.dirPerm;
+  }
+  option.onProgress = (delta: number) => {
+    bytes.transferred += delta;
+  };
+  await sync(buildConfig(false), t => {
+    totalBytes += t.fileSize;
+    scheduler.add(t);
+  });
+  await runSchedulerWithProgress(
+    scheduler,
+    ctx.fileService,
+    `SFTP: Sincronizando ${arrow}`,
+    bytes,
+    totalBytes
+  );
+}
+
 export const syncPreview2Remote = createFileHandler<SyncOption>({
   name: 'sync preview local ➞ remote',
-  async handle(option) {
-    const remoteFs = await this.fileService.getRemoteFileSystem(this.config);
-    const localFs = this.fileService.getLocalFileSystem();
-    const { localFsPath, remoteFsPath } = this.target;
-    const fileService = this.fileService;
-    const concurrency = this.config.concurrency;
-
-    const buildConfig = (dryRun: boolean) => ({
-      srcFsPath: localFsPath,
-      srcFs: localFs,
-      targetFsPath: remoteFsPath,
-      targetFs: remoteFs,
-      transferOption: { ...option, dryRun },
-      transferDirection: TransferDirection.LOCAL_TO_REMOTE,
-    });
-
-    const collected: TransferTask[] = [];
-    const deleted = await sync(buildConfig(true), t => collected.push(t));
-
-    if (collected.length === 0 && deleted.length === 0) {
-      vscode.window.showInformationMessage('SFTP: nada para sincronizar (local ➞ remoto). ✅');
-      return;
-    }
-
-    const changes: vscode.QuickPickItem[] = [
-      ...collected.map(t => ({
-        label: `$(arrow-up) ${upath.basename(t.targetFsPath)}`,
-        description: t.targetFsPath,
-        detail: 'Enviar',
-      })),
-      ...deleted.map(f => ({
-        label: `$(trash) ${upath.basename(f.fspath)}`,
-        description: f.fspath,
-        detail: 'Excluir no remoto',
-      })),
-    ];
-
-    const APPLY = '$(check) Aplicar sincronização';
-    const summary = `${collected.length} envio(s) · ${deleted.length} exclusão(ões)`;
-    const pick = await vscode.window.showQuickPick(
-      [{ label: APPLY, description: summary }, ...changes],
-      {
-        placeHolder: `Preview local ➞ remoto: ${summary}. Escolha "Aplicar" para sincronizar.`,
-        matchOnDescription: true,
-      }
-    );
-
-    if (!pick || pick.label !== APPLY) {
-      return;
-    }
-
-    // Apply for real.
-    const scheduler = fileService.createTransferScheduler(concurrency);
-    const bytes = { transferred: 0 };
-    let totalBytes = 0;
-    option.filePerm = this.config.filePerm;
-    option.dirPerm = this.config.dirPerm;
-    option.onProgress = (delta: number) => {
-      bytes.transferred += delta;
-    };
-    await sync(buildConfig(false), t => {
-      totalBytes += t.fileSize;
-      scheduler.add(t);
-    });
-    await runSchedulerWithProgress(
-      scheduler,
-      fileService,
-      'SFTP: Sincronizando local ➞ remoto',
-      bytes,
-      totalBytes
-    );
+  handle(option) {
+    return previewAndApplySync(this, option, TransferDirection.LOCAL_TO_REMOTE);
   },
   transformOption() {
     const config = this.config;
@@ -392,6 +410,25 @@ export const syncPreview2Remote = createFileHandler<SyncOption>({
   },
   afterHandle() {
     refreshRemoteExplorer(this.target, true);
+  },
+});
+
+export const syncPreview2Local = createFileHandler<SyncOption>({
+  name: 'sync preview remote ➞ local',
+  handle(option) {
+    return previewAndApplySync(this, option, TransferDirection.REMOTE_TO_LOCAL);
+  },
+  transformOption() {
+    const config = this.config;
+    const syncOption = config.syncOption || {};
+    return {
+      perserveTargetMode: false,
+      ignore: config.ignore,
+      delete: syncOption.delete,
+      skipCreate: syncOption.skipCreate,
+      ignoreExisting: syncOption.ignoreExisting,
+      update: syncOption.update,
+    };
   },
 });
 
