@@ -2,6 +2,8 @@
 	- [Erro: Failure - Solução Um](#erro-failure---solução-um)
 	- [Erro: Failure - Solução Dois](#erro-failure---solução-dois)
 - [Erro: Conexão fechada](#erro-conexão-fechada)
+- [A extensão parou de enviar / "Client is closed"](#a-extensão-parou-de-enviar--client-is-closed)
+- [Arquivos temporários do editor sendo enviados](#arquivos-temporários-do-editor-sendo-enviados)
 - [Erro: Clicar em "Upload Changed Files" não funciona](#erro-clicar-em-upload-changed-files-não-funciona)
 - [ENFILE: file table overflow ...](#enfile-file-table-overflow-)
 	- [ENFILE: file table overflow ... - Solução para o limite rígido do MacOS](#enfile-file-table-overflow----solução-para-o-limite-rígido-do-macos)
@@ -66,6 +68,48 @@ Você terá que substituir explicitamente os algoritmos padrão da camada de tra
 			"hmac-sha2-512"
 		]
 	}
+}
+```
+
+## A extensão parou de enviar / "Client is closed"
+
+**Sintoma:** o envio automático funciona por um tempo e, de repente, **para de vez**. A partir daí, todo envio, download ou salvamento falha com a mesma mensagem repetida no log:
+
+```
+Error: Client is closed because ENOENT: no such file or directory, open '...'
+Closing reason: Error: ENOENT: no such file or directory, open '...'
+```
+
+Recarregar a janela do VS Code resolve — até acontecer de novo.
+
+**Corrigido na 1.22.1.** Se você está numa versão anterior, **atualize**.
+
+O que acontecia: quando a conexão FTP era derrubada por um erro (tipicamente um arquivo temporário que some no meio do envio), a extensão não percebia a queda e continuava reutilizando a **conexão morta** indefinidamente. Um único erro travava tudo até recarregar a janela.
+
+A causa era sutil: a detecção de queda dependia dos eventos do socket, mas o `basic-ftp` remove todos os listeners **antes** de destruir o socket ao encerrar por erro — então o aviso nunca chegava. Agora o estado é consultado diretamente no cliente, sem depender de eventos, e uma conexão morta é substituída automaticamente na operação seguinte.
+
+Se você ainda vir isso na 1.22.1 ou posterior, [abra uma issue](https://github.com/wandersonmaracaipe/vscode-sftp/issues) com o log (`sftp.debug` em `true`).
+
+## Arquivos temporários do editor sendo enviados
+
+**Sintoma:** o log mostra envios de arquivos com nomes estranhos, como `arquivo.php.tmp.10652.f7a7479f0125` ou `arquivo.php.vsctmp`, quase sempre seguidos de um erro `ENOENT`.
+
+Esses arquivos são criados pelo editor durante o "salvamento atômico": ele grava o conteúdo num arquivo temporário e depois o renomeia por cima do arquivo real. Eles existem por milissegundos — quando o envio começa, o arquivo já sumiu.
+
+Com o `watcher.files` em `"**/*"`, o observador enxerga esses arquivos e tenta enviá-los. **Desde a 1.22.1** eles são ignorados por padrão (`*.tmp.*`, `*.vsctmp`, `*.swp`, `*~`).
+
+Se você definiu o seu próprio `ignore` no `sftp.json`, a sua lista **substitui** o padrão — então inclua esses padrões você mesmo:
+
+```json
+{
+  "ignore": [
+    ".git",
+    "node_modules",
+    "*.tmp.*",
+    "*.vsctmp",
+    "*.swp",
+    "*~"
+  ]
 }
 ```
 

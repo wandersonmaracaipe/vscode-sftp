@@ -333,6 +333,12 @@ No sftp.json:
 2. Defina `sftp.debug` como `true` e recarregue o VS Code.
 3. Veja os logs em `View > Output > sftp`.
 
+### Problemas comuns
+- **A extensão parou de enviar** e tudo falha com `"Client is closed"` — corrigido na 1.22.1; [detalhes](./FAQ.md#a-extensão-parou-de-enviar--client-is-closed).
+- **Arquivos `.tmp.` / `.vsctmp` sendo enviados** e falhando com `ENOENT` — são temporários do editor, ignorados por padrão desde a 1.22.1; [detalhes](./FAQ.md#arquivos-temporários-do-editor-sendo-enviados).
+
+> ⚠️ Se você define `ignore` no seu `sftp.json`, a sua lista **substitui** a padrão (não é mesclada). Veja o padrão atual em [ignore](docs/configuration.md#ignore).
+
 ## FAQ
 Você pode ver todas as Perguntas Frequentes [aqui](./FAQ.md).
 
