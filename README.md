@@ -324,6 +324,18 @@ O Remote Explorer permite explorar os arquivos no remoto. Você pode abri-lo de 
 
 Pelo Remote Explorer você só visualiza o conteúdo de um arquivo. Execute o comando `SFTP: Edit in Local` para editá-lo localmente.
 
+### Buscar arquivos remotos
+Clique no ícone de **lupa** na barra do Remote Explorer (ou use **"Buscar Arquivos Remotos"** no menu de uma conexão) para percorrer a árvore remota e abrir um seletor filtrável — escolher um resultado abre o arquivo. A varredura é limitada (5000 entradas, 12 níveis) para não travar em remotos muito grandes; se o limite for atingido, navegue até uma subpasta e busque a partir dela.
+
+### Favoritos
+Use **"Adicionar aos Favoritos"** no menu de qualquer arquivo ou pasta remota para guardá-lo. A **estrela** na barra do Remote Explorer abre um favorito: um arquivo abre no editor, uma pasta é revelada e expandida na árvore. Os favoritos são salvos por workspace.
+
+### Arrastar e soltar para enviar
+Arraste arquivos ou pastas do gerenciador de arquivos do sistema (ou do próprio Explorer do VS Code) e **solte sobre uma pasta remota** para enviá-los ali. Soltar sobre um arquivo envia para a pasta que o contém.
+
+### Comparar pasta com o remoto
+Clique com o botão direito em uma pasta local e escolha **"Comparar Pasta com o Remoto"** para listar as diferenças (arquivos diferentes, só locais, só remotos) sem alterar nada. Escolher um arquivo diferente abre o _diff_ lado a lado.
+
 ### Seleção múltipla
 Você pode selecionar vários arquivos/pastas de uma vez no servidor remoto para baixar e enviar. Basta segurar Ctrl ou Shift enquanto seleciona os itens desejados, como no explorador de arquivos comum.
 
