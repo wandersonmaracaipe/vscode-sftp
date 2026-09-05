@@ -38,6 +38,22 @@ function formatEta(seconds: number): string {
   return `${h}h ${m % 60}m restantes`;
 }
 
+// Collects transfers into the scheduler, disposing it if the collection fails.
+// Walking the tree is where a dropped connection surfaces first, and a
+// scheduler abandoned there stayed registered on the FileService for the rest
+// of the session — `isTransferring()` never went back to false.
+async function collectInto<T>(
+  scheduler: TransferScheduler,
+  collect: () => Promise<T>
+): Promise<T> {
+  try {
+    return await collect();
+  } catch (error) {
+    scheduler.stop();
+    throw error;
+  }
+}
+
 // Runs a collected transfer scheduler, surfacing a cancellable progress
 // notification for multi-file operations. When the total byte size is known the
 // bar is determinate by bytes and shows size/speed/ETA; otherwise it advances by
@@ -51,8 +67,14 @@ async function runSchedulerWithProgress(
   totalBytes = 0
 ) {
   const total = scheduler.size;
+  // Unregister on the way out no matter how the run ends: a scheduler left
+  // behind keeps the service reporting a transfer that is no longer running.
   if (total <= 1) {
-    await scheduler.run();
+    try {
+      await scheduler.run();
+    } finally {
+      scheduler.stop();
+    }
     return;
   }
 
@@ -104,6 +126,7 @@ async function runSchedulerWithProgress(
       try {
         await scheduler.run();
       } finally {
+        scheduler.stop();
         if (timer) {
           clearInterval(timer);
         }
@@ -155,10 +178,12 @@ function createTransferHandle(direction: TransferDirection) {
       bytes.transferred += delta;
     };
     // todo: abort at here. we should stop collect task
-    await transfer(transferConfig, t => {
-      totalBytes += t.fileSize;
-      scheduler.add(t);
-    });
+    await collectInto(scheduler, () =>
+      transfer(transferConfig, t => {
+        totalBytes += t.fileSize;
+        scheduler.add(t);
+      })
+    );
     const title =
       direction === TransferDirection.LOCAL_TO_REMOTE ? 'SFTP: Enviando' : 'SFTP: Baixando';
     await runSchedulerWithProgress(scheduler, this.fileService, title, bytes, totalBytes);
@@ -217,19 +242,21 @@ export const sync2Remote = createFileHandler<SyncOption>({
     option.onProgress = (delta: number) => {
       bytes.transferred += delta;
     };
-    await sync(
-      {
-        srcFsPath: localFsPath,
-        srcFs: localFs,
-        targetFsPath: remoteFsPath,
-        targetFs: remoteFs,
-        transferOption: option,
-        transferDirection: TransferDirection.LOCAL_TO_REMOTE,
-      },
-      t => {
-        totalBytes += t.fileSize;
-        scheduler.add(t);
-      }
+    await collectInto(scheduler, () =>
+      sync(
+        {
+          srcFsPath: localFsPath,
+          srcFs: localFs,
+          targetFsPath: remoteFsPath,
+          targetFs: remoteFs,
+          transferOption: option,
+          transferDirection: TransferDirection.LOCAL_TO_REMOTE,
+        },
+        t => {
+          totalBytes += t.fileSize;
+          scheduler.add(t);
+        }
+      )
     );
     await runSchedulerWithProgress(
       scheduler,
@@ -271,19 +298,21 @@ export const sync2Local = createFileHandler<SyncOption>({
     option.onProgress = (delta: number) => {
       bytes.transferred += delta;
     };
-    await sync(
-      {
-        srcFsPath: remoteFsPath,
-        srcFs: remoteFs,
-        targetFsPath: localFsPath,
-        targetFs: localFs,
-        transferOption: option,
-        transferDirection: TransferDirection.REMOTE_TO_LOCAL,
-      },
-      t => {
-        totalBytes += t.fileSize;
-        scheduler.add(t);
-      }
+    await collectInto(scheduler, () =>
+      sync(
+        {
+          srcFsPath: remoteFsPath,
+          srcFs: remoteFs,
+          targetFsPath: localFsPath,
+          targetFs: localFs,
+          transferOption: option,
+          transferDirection: TransferDirection.REMOTE_TO_LOCAL,
+        },
+        t => {
+          totalBytes += t.fileSize;
+          scheduler.add(t);
+        }
+      )
     );
     await runSchedulerWithProgress(
       scheduler,
@@ -384,10 +413,12 @@ async function previewAndApplySync(
   option.onProgress = (delta: number) => {
     bytes.transferred += delta;
   };
-  await sync(buildConfig(false), t => {
-    totalBytes += t.fileSize;
-    scheduler.add(t);
-  });
+  await collectInto(scheduler, () =>
+    sync(buildConfig(false), t => {
+      totalBytes += t.fileSize;
+      scheduler.add(t);
+    })
+  );
   await runSchedulerWithProgress(
     scheduler,
     ctx.fileService,
@@ -423,21 +454,23 @@ export async function uploadPathToRemote(
     },
   };
 
-  await transfer(
-    {
-      srcFsPath: localFsPath,
-      srcFs: localFs,
-      targetFsPath: remoteFsPath,
-      targetFs: remoteFs,
-      transferOption: option,
-      filePerm: config.filePerm,
-      dirPerm: config.dirPerm,
-      transferDirection: TransferDirection.LOCAL_TO_REMOTE,
-    },
-    t => {
-      totalBytes += t.fileSize;
-      scheduler.add(t);
-    }
+  await collectInto(scheduler, () =>
+    transfer(
+      {
+        srcFsPath: localFsPath,
+        srcFs: localFs,
+        targetFsPath: remoteFsPath,
+        targetFs: remoteFs,
+        transferOption: option,
+        filePerm: config.filePerm,
+        dirPerm: config.dirPerm,
+        transferDirection: TransferDirection.LOCAL_TO_REMOTE,
+      },
+      t => {
+        totalBytes += t.fileSize;
+        scheduler.add(t);
+      }
+    )
   );
   await runSchedulerWithProgress(scheduler, fileService, 'SFTP: Enviando', bytes, totalBytes);
 }

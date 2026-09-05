@@ -17,8 +17,35 @@ import localFs from './localFs';
 const MAX_CONNECT_ATTEMPTS = 3; // 1 tentativa inicial + 2 novas tentativas
 const RECONNECT_DELAY_MS = 1000;
 
+// Hard ceiling for a single connect attempt, on top of the configured
+// connectTimeout. It only fires when the client itself failed to enforce its
+// own timeout — a handshake stuck forever, or a credential/host-key prompt the
+// user never answers. Without it that attempt never settles, and because every
+// caller waits on the same pending connect the extension goes quiet: uploads,
+// saves and syncs all hang with no error until the window is reloaded.
+const CONNECT_WATCHDOG_EXTRA_MS = 30 * 1000;
+
+const WATCHDOG_MESSAGE_MARK = 'conexão sem resposta';
+
 function delay(ms: number) {
   return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    const clear = () => clearTimeout(timer);
+    promise.then(
+      value => {
+        clear();
+        resolve(value);
+      },
+      error => {
+        clear();
+        reject(error);
+      }
+    );
+  });
 }
 
 function hashOption(opiton) {
@@ -30,9 +57,9 @@ function hashOption(opiton) {
 class KeepAliveRemoteFs {
   private isValid: boolean = false;
 
-  private pendingPromise: Promise<RemoteFileSystem> | null;
+  private pendingPromise: Promise<RemoteFileSystem> | null = null;
 
-  private fs: RemoteFileSystem;
+  private fs: RemoteFileSystem | undefined;
 
   async getFs(
     option: ConnectOption & {
@@ -44,16 +71,19 @@ class KeepAliveRemoteFs {
     // those aren't guaranteed to arrive (basic-ftp strips the socket listeners
     // before destroying it). Ask the client whether it's actually usable, so a
     // dead connection is replaced instead of served forever.
-    if (this.isValid && this.fs.isClosed()) {
+    if (this.isValid && (!this.fs || this.fs.isClosed())) {
       logger.info('a conexão foi encerrada pelo servidor; reconectando…');
-      this.invalid('closed');
+      this.invalidate('closed');
     }
 
     if (this.isValid) {
-      this.pendingPromise = null;
-      return Promise.resolve(this.fs);
+      return Promise.resolve(this.fs!);
     }
 
+    // Only a connect that is still running may be shared. `pendingPromise` is
+    // cleared the moment the attempt settles (see below), so a finished one —
+    // resolved with a connection that has since died, or rejected with an old
+    // error — is never handed out again.
     if (this.pendingPromise) {
       return this.pendingPromise;
     }
@@ -90,6 +120,29 @@ class KeepAliveRemoteFs {
       throw new Error(`Protocolo não suportado: ${option.protocol}`);
     }
 
+    app.sftpBarItem.showMsg('conectando...', connectOption.connectTimeout);
+
+    // Built before the assignment so a synchronous throw can't leave
+    // `pendingPromise` holding a rejected promise that nobody ever clears.
+    const connecting = this._connect(FsConstructor, connectOption, option);
+    this.pendingPromise = connecting;
+    const release = () => {
+      if (this.pendingPromise === connecting) {
+        this.pendingPromise = null;
+      }
+    };
+    // Both branches release: a failed connect must not park the pool on an old
+    // error, and a successful one is served from `isValid`/`this.fs` afterwards.
+    connecting.then(release, release);
+
+    return connecting;
+  }
+
+  private async _connect(
+    FsConstructor: typeof SFTPFileSystem | typeof FTPFileSystem,
+    connectOption: ConnectOption,
+    option: { remoteTimeOffsetInHours: number }
+  ): Promise<RemoteFileSystem> {
     // Prefer a password saved in the OS keychain; fall back to prompting.
     const askForPasswd = async (msg: string) => {
       const saved = await getStoredPassword(connectOption);
@@ -120,77 +173,105 @@ class KeepAliveRemoteFs {
         'Confiar e conectar'
       );
 
-    app.sftpBarItem.showMsg('conectando...', connectOption.connectTimeout);
-    this.pendingPromise = (async () => {
-      let lastError;
-      for (let attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++) {
-        // A fresh client per attempt. onDisconnected is bound before connect
-        // (some clients wire the handler during connect), but `invalid()` only
-        // acts once the connection is established, so a failed attempt's
-        // teardown won't disturb the retry.
-        this.fs = new FsConstructor(upath, {
-          clientOption: connectOption,
-          remoteTimeOffsetInHours: option.remoteTimeOffsetInHours,
-        });
-        this.fs.onDisconnected(this.invalid.bind(this));
+    const watchdogMs =
+      Math.max(connectOption.connectTimeout || 0, 10 * 1000) + CONNECT_WATCHDOG_EXTRA_MS;
 
-        try {
-          await this.fs.connect(connectOption, {
+    let lastError;
+    for (let attempt = 1; attempt <= MAX_CONNECT_ATTEMPTS; attempt++) {
+      // A fresh client per attempt. The handler is bound to the connection it
+      // belongs to: a 'close' from an attempt that already failed used to
+      // arrive late and tear down the connection that replaced it — a live
+      // connection dropped the instant it was established.
+      const fs = new FsConstructor(upath, {
+        clientOption: connectOption,
+        remoteTimeOffsetInHours: option.remoteTimeOffsetInHours,
+      });
+      fs.onDisconnected((reason: string) => this.invalidate(reason, fs));
+      this.fs = fs;
+
+      try {
+        await withTimeout(
+          fs.connect(connectOption, {
             askForPasswd,
             askForPassphrase,
             confirmHostKey,
-          });
-          this.isValid = true;
-          app.sftpBarItem.updateStatus(StatusBarItem.Status.ok);
-          app.sftpBarItem.reset();
-          return this.fs;
-        } catch (err) {
-          lastError = err;
-          try {
-            this.fs.end();
-          } catch {
-            // ignore teardown errors
-          }
-
-          if (attempt >= MAX_CONNECT_ATTEMPTS || !isTransientError(err)) {
-            break;
-          }
-
-          logger.warn(
-            `Falha ao conectar (tentativa ${attempt}/${MAX_CONNECT_ATTEMPTS}): ` +
-              `${err && err.message}. Tentando novamente…`
-          );
-          app.sftpBarItem.showMsg('reconectando…', connectOption.connectTimeout);
-          await delay(RECONNECT_DELAY_MS);
+          }),
+          watchdogMs,
+          `[${connectOption.host}]: ${WATCHDOG_MESSAGE_MARK} após ${Math.round(
+            watchdogMs / 1000
+          )}s. Se houver um pedido de senha/passphrase aberto, responda-o e tente novamente.`
+        );
+        this.isValid = true;
+        app.sftpBarItem.updateStatus(StatusBarItem.Status.ok);
+        app.sftpBarItem.reset();
+        return fs;
+      } catch (err) {
+        lastError = err;
+        try {
+          fs.end();
+        } catch {
+          // ignore teardown errors
         }
+
+        // A watchdog hit means the attempt is stuck, not that the link
+        // flickered — retrying would just re-open the same prompt and stall
+        // again. Report it instead, leaving the pool free for the next call.
+        const stuck = err && String(err.message || '').indexOf(WATCHDOG_MESSAGE_MARK) !== -1;
+        if (stuck || attempt >= MAX_CONNECT_ATTEMPTS || !isTransientError(err)) {
+          break;
+        }
+
+        logger.warn(
+          `Falha ao conectar (tentativa ${attempt}/${MAX_CONNECT_ATTEMPTS}): ` +
+            `${err && err.message}. Tentando novamente…`
+        );
+        app.sftpBarItem.showMsg('reconectando…', connectOption.connectTimeout);
+        await delay(RECONNECT_DELAY_MS);
       }
+    }
 
-      this.pendingPromise = null;
-      this.isValid = false;
-      app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
-      throw lastError;
-    })();
-
-    return this.pendingPromise;
+    this.isValid = false;
+    app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
+    throw lastError;
   }
 
-  invalid(reason: string) {
-    // Ignore disconnect events that fire while we're still (re)connecting;
-    // only an established connection dropping should invalidate the pool entry.
+  // Drops the pooled connection so the next request builds a new one. `source`
+  // identifies the connection a disconnect handler belongs to; an event from a
+  // connection we have already replaced must not touch the current one.
+  invalidate(reason: string, source?: RemoteFileSystem) {
+    if (source && source !== this.fs) {
+      try {
+        source.end();
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
     if (!this.isValid) {
       return;
     }
+
+    logger.debug(`connection invalidated (${reason})`);
     this.isValid = false;
-    this.pendingPromise = null;
     try {
-      this.fs.end();
+      if (this.fs) {
+        this.fs.end();
+      }
     } catch {
       // ignore
     }
   }
 
   end() {
-    this.fs.end();
+    this.isValid = false;
+    try {
+      if (this.fs) {
+        this.fs.end();
+      }
+    } catch {
+      // ignore teardown errors: the entry is being dropped either way
+    }
   }
 }
 
@@ -225,4 +306,13 @@ export function removeRemoteFs(option) {
     fs.end();
     delete fsTable[identity];
   }
+}
+
+// Drops every pooled connection. Backs the "Reconectar" command: whatever state
+// a connection got itself into, the next operation starts from a fresh one.
+export function removeAllRemoteFs() {
+  Object.keys(fsTable).forEach(identity => {
+    fsTable[identity].end();
+    delete fsTable[identity];
+  });
 }

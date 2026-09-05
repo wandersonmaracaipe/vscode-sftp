@@ -475,8 +475,11 @@ export default class FileService {
   cancelTransferTasks() {
     // keep the order
     // 1, remove tasks not start
-    this._transferSchedulers.forEach(transfer => transfer.stop());
+    // Iterate a copy: stop() unregisters the scheduler, and splicing the array
+    // being walked would skip every other entry, leaving them running.
+    const schedulers = this._transferSchedulers.slice();
     this._transferSchedulers.length = 0;
+    schedulers.forEach(transfer => transfer.stop());
 
     // 2. cancel running task
     this._pendingTransferTasks.forEach(t => t.cancel());
@@ -517,6 +520,11 @@ export default class FileService {
       stop() {
         isStopped = true;
         scheduler.empty();
+        // Also unregister: a scheduler whose collection step failed never
+        // reaches run(), and one left behind kept `isTransferring()` true
+        // forever — the extension believed a transfer was still going long
+        // after it had died.
+        fileService._removeScheduler(transferScheduler);
       },
       add(task: TransferTask) {
         if (isStopped) {
