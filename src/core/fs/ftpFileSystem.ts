@@ -20,6 +20,22 @@ function permissionsToMode(perm?: { user: number; group: number; world: number }
   return (perm.user << 6) | (perm.group << 3) | perm.world;
 }
 
+// Paths that name no directory to create: the remote root and the "current
+// directory" forms. `MKD` on one of these is meaningless — a server answers it
+// with "501 No directory name" — and it isn't an error worth failing a
+// transfer over, because the root always exists. SFTP's ensureDir has had the
+// same guard all along; FTP's walk up the tree didn't, so it eventually issued
+// `MKD /` and killed the whole upload.
+function isRootPath(dir: string): boolean {
+  return (
+    !dir ||
+    dir === '/' ||
+    dir === '.' ||
+    dir === './' ||
+    /^[a-zA-Z]:(\/|\\)?$/.test(dir)
+  );
+}
+
 // FTP `MFMT` timestamp format: YYYYMMDDhhmmss in UTC.
 function formatMfmtDate(date: Date): string {
   const pad = (n: number) => ('00' + n).slice(-2);
@@ -169,6 +185,12 @@ export default class FTPFileSystem extends RemoteFileSystem {
   }
 
   async _ensureDir(dir: string, checkExistFirst: boolean): Promise<void> {
+    // The root is always there. Trying to create it is what produced
+    // "501 No directory name" — and that error aborted the entire upload.
+    if (isRootPath(dir)) {
+      return;
+    }
+
     // check if exist first.
     // `ls` command can't make sure to return dotfiles, so this not work for dotfiles,
     // cause ftp don't return distinct error code for dir not exists and dir exists
@@ -199,37 +221,39 @@ export default class FTPFileSystem extends RemoteFileSystem {
       err = error;
     }
 
-    switch (err.code) {
-      case 550:
-        // Hooray, exists!
-        if (err.message.toLowerCase().indexOf('file exists') >= 0) {
-          return;
-        }
+    if (err.code === 550) {
+      // Hooray, exists!
+      if (err.message.toLowerCase().indexOf('file exists') >= 0) {
+        return;
+      }
 
-        const parentPath = this.pathResolver.dirname(dir);
-        // We are trying to create the root dir, something must go wrong.
-        if (parentPath === dir) {
-          throw err;
-        }
-
+      const parentPath = this.pathResolver.dirname(dir);
+      // Only walk up while there is a real parent left to create. Reaching the
+      // root means the missing piece was `dir` itself, so fall through to the
+      // check below instead of asking the server to create the root.
+      if (parentPath !== dir && !isRootPath(parentPath)) {
         // If goes here, we can assume the file doesn't exist
         await this._ensureDir(parentPath, false);
         await this.mkdir(dir);
-        break;
+        return;
+      }
+    }
 
-      // In the case of any other error, just see if there's a dir
-      // there already.  If so, then hooray!  If not, then something
-      // is borked.
-      default:
-        try {
-          const stat = await this.lstat(dir);
-          if (stat.type !== FileType.Directory) throw err;
-        } catch {
-          // if the stat fails, then that's super weird.
-          // let the original error be the failure reason
-          throw err;
-        }
-        break;
+    // Any other failure: the directory may well be there already — servers
+    // disagree on the reply code for that ("550 File exists", "521 Directory
+    // already exists", …). Believe a successful stat; otherwise report the
+    // original error.
+    let stat;
+    try {
+      stat = await this.lstat(dir);
+    } catch {
+      // if the stat fails, then that's super weird.
+      // let the original error be the failure reason
+      throw err;
+    }
+
+    if (stat.type !== FileType.Directory) {
+      throw err;
     }
   }
 
@@ -305,6 +329,13 @@ export default class FTPFileSystem extends RemoteFileSystem {
   }
 
   private async atomicMakeDir(path: string): Promise<void> {
+    // Never put a bare `MKD` on the wire: the server rejects it with
+    // "501 No directory name", an error that reads like a server problem and
+    // says nothing about the caller that asked for it.
+    if (isRootPath(path)) {
+      throw new Error(`"${path}" não é um nome de diretório válido`);
+    }
+
     // Single, non-recursive MKD so that _ensureDir keeps control over the
     // recursion and can read the 550 reply code. basic-ftp's send() throws an
     // FTPError carrying the numeric reply code on failure.
