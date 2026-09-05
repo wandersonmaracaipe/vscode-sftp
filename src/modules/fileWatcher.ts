@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { existsSync } from 'fs';
+import { statSync } from 'fs';
 import debounce = require('lodash.debounce');
 import logger from '../logger';
 import { isValidFile, fileDepth } from '../helper';
@@ -32,6 +32,15 @@ const watchers: {
 
 const uploadQueue = new Set<vscode.Uri>();
 const deleteQueue = new Set<vscode.Uri>();
+
+// Paths that arrived as a *create* event. A directory's modification time moves
+// whenever anything inside it does, so a plain change event on a folder is not
+// a reason to re-send the folder: uploading it walks the whole tree and
+// re-sends every file under it. Saving one file in the project root would
+// re-upload the entire project — on FTP, where transfers are serialised, that
+// keeps the queue busy for a very long time and auto-upload looks dead. A
+// folder that was just created is still sent, so new folders reach the remote.
+const createdPaths = new Set<string>();
 
 // less than 550 will not work
 const ACTION_INTEVAL = 550;
@@ -70,9 +79,65 @@ async function runBounded<T>(items: T[], limit: number, run: (item: T) => Promis
 let uploadChain: Promise<void> = Promise.resolve();
 let deleteChain: Promise<void> = Promise.resolve();
 
+// How long a batch may go without finishing a single file before we stop
+// waiting on it. The chain is one promise: a batch that never settles used to
+// block every later batch forever, so auto-upload died silently — with no error
+// and no way back short of reloading the window. The timer is re-armed after
+// each file, so a long but progressing batch is never cut off.
+const BATCH_STALL_TIMEOUT = 10 * 60 * 1000;
+
+// Runs one batch and always releases the chain: on success, on failure, or on a
+// stall. A stalled batch is left to finish on its own — we only stop making
+// every future upload wait for it.
+function runBatch(
+  files: vscode.Uri[],
+  label: string,
+  runOne: (uri: vscode.Uri) => Promise<void>
+): Promise<void> {
+  return new Promise<void>(resolve => {
+    let released = false;
+    let timer: NodeJS.Timeout;
+
+    const release = () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      clearTimeout(timer);
+      resolve();
+    };
+
+    const armStallTimer = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        logger.error(
+          `${label}: nenhum arquivo concluído em ${BATCH_STALL_TIMEOUT /
+            60000} minutos. A fila foi liberada para não travar os próximos envios.`
+        );
+        app.sftpBarItem.updateStatus(StatusBarItem.Status.error);
+        release();
+      }, BATCH_STALL_TIMEOUT);
+    };
+
+    armStallTimer();
+    runBounded(files, batchConcurrency(files[0]), async uri => {
+      try {
+        await runOne(uri);
+      } finally {
+        armStallTimer();
+      }
+    }).then(release, error => {
+      logger.error(error, label);
+      release();
+    });
+  });
+}
+
 function doUpload() {
   const files = Array.from(uploadQueue).sort((a, b) => fileDepth(b.fsPath) - fileDepth(a.fsPath));
+  const created = new Set(createdPaths);
   uploadQueue.clear();
+  createdPaths.clear();
   if (!files.length) {
     return;
   }
@@ -91,7 +156,17 @@ function doUpload() {
     // The file may have vanished between the fs event and now (common with
     // transient/temp files). Skip it instead of letting the read fail
     // mid-transfer and tear down the connection.
-    if (!existsSync(fspath)) {
+    let stat;
+    try {
+      stat = statSync(fspath);
+    } catch {
+      return;
+    }
+
+    // A folder that only had its timestamp touched: its files raise their own
+    // events, so re-sending the whole tree here is pure duplicated work.
+    if (stat.isDirectory() && !created.has(fspath)) {
+      logger.debug(`[watcher/updated] pasta ignorada (sem criação): ${fspath}`);
       return;
     }
 
@@ -104,9 +179,7 @@ function doUpload() {
     }
   };
 
-  uploadChain = uploadChain
-    .then(() => runBounded(files, batchConcurrency(files[0]), uploadOne))
-    .catch(error => logger.error(error, 'watcher upload batch'));
+  uploadChain = uploadChain.then(() => runBatch(files, 'watcher upload batch', uploadOne));
 }
 
 function doDelete() {
@@ -127,19 +200,20 @@ function doDelete() {
     }
   };
 
-  deleteChain = deleteChain
-    .then(() => runBounded(files, batchConcurrency(files[0]), deleteOne))
-    .catch(error => logger.error(error, 'watcher delete batch'));
+  deleteChain = deleteChain.then(() => runBatch(files, 'watcher delete batch', deleteOne));
 }
 
 const debouncedUpload = debounce(doUpload, ACTION_INTEVAL, { leading: true, trailing: true });
 const debouncedDelete = debounce(doDelete, ACTION_INTEVAL, { leading: true, trailing: true });
 
-function uploadHandler(uri: vscode.Uri) {
+function uploadHandler(uri: vscode.Uri, isCreate: boolean) {
   if (!isValidFile(uri) || isIgnored(uri)) {
     return;
   }
 
+  if (isCreate) {
+    createdPaths.add(uri.fsPath);
+  }
   uploadQueue.add(uri);
   debouncedUpload();
 }
@@ -181,8 +255,8 @@ function createWatcher(
   addWatcher(watcherBase, watcher);
 
   if (watcherConfig.autoUpload) {
-    watcher.onDidCreate(uploadHandler);
-    watcher.onDidChange(uploadHandler);
+    watcher.onDidCreate(uri => uploadHandler(uri, true));
+    watcher.onDidChange(uri => uploadHandler(uri, false));
   }
 
   if (watcherConfig.autoDelete) {
