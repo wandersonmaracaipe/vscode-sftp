@@ -11,6 +11,13 @@ Fork do [vscode-sftp do @Natizyskunk](https://github.com/Natizyskunk/vscode-sftp
 ## Sobre este fork
 Esta é uma versão modernizada da extensão SFTP: o _toolchain_ foi atualizado (TypeScript 5, ESLint, `@types` atualizados), as dependências foram atualizadas e **todas as vulnerabilidades conhecidas do `npm audit` foram resolvidas**, além de alguns bugs de _build_/execução corrigidos. O conjunto de recursos e a configuração permanecem compatíveis com a extensão de origem.
 
+**Novidades da 1.23.1:**
+- **Correção crítica — o envio automático parava até reiniciar o editor** (com o **"Sincronizar Pasta" ainda funcionando**, o que despistava o diagnóstico). Eram duas causas somadas:
+  - **`501 No directory name`** — ao garantir que a pasta de destino existe, o FTP subia a árvore criando cada nível e ia **um nível além**, pedindo ao servidor para criar a **raiz**. O erro derrubava a transferência inteira, em todo arquivo. O SFTP já tinha essa proteção; o FTP não.
+  - **A pasta inteira era reenviada** — a data de modificação de uma pasta muda sempre que algo dentro dela muda, e o observador tratava isso como "envie esta pasta": um envio **recursivo do projeto todo** a cada arquivo salvo. Em FTP, com transferências serializadas, os salvamentos seguintes ficavam presos atrás dele.
+- **Nenhum erro deixa mais a extensão parada**: uma conexão que trava (por exemplo, um pedido de senha não respondido) é abandonada por tempo-limite em vez de fazer toda operação seguinte esperar para sempre; um aviso de queda atrasado não derruba mais a conexão que o substituiu; e uma remessa travada do observador não bloqueia as próximas.
+- **Novo comando "SFTP: Reconectar (reiniciar conexões)"** — descarta conexões e transferências pendentes. Se algo travar, use-o em vez de reiniciar o editor.
+
 **Novidades da 1.23.0:**
 - **Remote Explorer**: busca de arquivos remotos, favoritos, arrastar-e-soltar para enviar, e "Comparar Pasta com o Remoto".
 - **Preview de Sincronização (Remoto → Local)** — o dry-run agora nos dois sentidos.
@@ -75,6 +82,7 @@ O Valuor SFTP permite adicionar, editar ou excluir arquivos em um diretório loc
   - Barra de progresso cancelável em transferências
   - Histórico de transferências com "Repetir"
   - Indicador de conexão na barra de status
+  - Comando de reconexão para recuperar a sessão sem reiniciar o editor
 - [Comandos](docs/commands.md)
 - [Depuração](#depuração)
 - [FAQ](#faq)
