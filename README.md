@@ -363,6 +363,8 @@ No sftp.json:
 ### Problemas comuns
 - **A extensão parou de enviar** e tudo falha com `"Client is closed"` — corrigido na 1.22.1; [detalhes](./FAQ.md#a-extensão-parou-de-enviar--client-is-closed).
 - **Arquivos `.tmp.` / `.vsctmp` sendo enviados** e falhando com `ENOENT` — são temporários do editor, ignorados por padrão desde a 1.22.1; [detalhes](./FAQ.md#arquivos-temporários-do-editor-sendo-enviados).
+- **O envio automático parou, mas "Sincronizar Pasta" ainda funciona** (FTP, muitas vezes com `501 No directory name` no log) — corrigido na 1.23.1; [detalhes](./FAQ.md#o-envio-automático-parou--501-no-directory-name).
+- **Travou de vez?** Rode **`SFTP: Reconectar (reiniciar conexões)`** na paleta de comandos em vez de reiniciar o editor.
 
 > ⚠️ Se você define `ignore` no seu `sftp.json`, a sua lista **substitui** a padrão (não é mesclada). Veja o padrão atual em [ignore](docs/configuration.md#ignore).
 

@@ -57,6 +57,11 @@ func(fspaths: string[])
 ### SFTP: Cancel All Transfers
 Interrompe as transferências atuais (upload e download).
 
+### SFTP: Reconectar (reiniciar conexões)
+Descarta todas as conexões abertas e as transferências pendentes, e zera os indicadores da barra de status. A próxima operação conecta do zero.
+
+Use quando a extensão parecer travada — por exemplo, um envio que não termina ou um erro que parece se repetir sem sair do lugar. Substitui o recurso de "fechar e reabrir o editor": nenhuma configuração é perdida e o trabalho local não é tocado.
+
 ### SFTP: Open SSH in Terminal
 Abre um terminal no VSCode e faz login automático em um servidor específico.
 

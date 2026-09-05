@@ -1,3 +1,15 @@
+## 1.23.1 - 2026-09-05
+Correção crítica: um erro no FTP parava o envio automático até reiniciar o editor.
+
+* **`501 No directory name` derrubava a transferência inteira** — ao garantir que a pasta de destino existe, o FTP subia a árvore criando cada nível e ia **um nível além**, pedindo `MKD /` (criar a raiz). O servidor recusa com `501 No directory name`, e esse erro abortava o envio inteiro — em todo arquivo, sempre. A raiz agora nunca é criada (ela já existe), e uma pasta que o servidor recusa por já existir é aceita depois de conferir com um `list`, em vez de depender da mensagem exata da resposta. O SFTP já tinha essa proteção; o FTP não.
+* **O observador reenviava o projeto todo** — a data de modificação de uma pasta muda sempre que algo dentro dela muda, e um evento de alteração numa pasta era tratado como "envie esta pasta": um upload **recursivo de toda a árvore** a cada arquivo salvo. Em FTP, com transferências serializadas, isso ocupava a fila por muito tempo e os salvamentos seguintes ficavam presos atrás dele — exatamente a impressão de que o envio automático havia morrido (com **"Sincronizar Pasta"** ainda funcionando, por não passar por essa fila). Agora só uma pasta **recém-criada** é enviada.
+* **Conexão travada não paralisa mais tudo** — as operações compartilham a mesma tentativa de conexão. Se ela nunca terminasse (um pedido de senha/passphrase não respondido, um handshake preso), **toda** operação seguinte esperava por ela para sempre, em silêncio. Agora há um tempo-limite: a tentativa é abandonada com um erro claro e a próxima operação reconecta. Uma tentativa que falha também não deixa mais o erro antigo "guardado" para ser devolvido às chamadas seguintes.
+* **Evento atrasado não derruba mais a conexão nova** — o aviso de queda de uma tentativa que já havia falhado chegava depois e encerrava a conexão que a substituiu, derrubando uma conexão viva no instante em que era estabelecida. Cada aviso agora só afeta a conexão a que pertence.
+* **Uma remessa travada do observador não bloqueia as próximas** — as remessas são encadeadas numa única promise; uma que nunca terminasse bloqueava todas as seguintes para sempre. Agora, sem nenhum arquivo concluído por 10 minutos, a fila é liberada (com aviso no log).
+* **Schedulers órfãos** — quando a varredura falhava (o caso comum: a conexão cai no meio), o scheduler continuava registrado no serviço e `isTransferring()` ficava `true` para sempre.
+* **Novo comando "SFTP: Reconectar (reiniciar conexões)"** — descarta todas as conexões e transferências pendentes e limpa os indicadores. Se algo travar, use-o em vez de reiniciar o editor.
+* **Testes de regressão** — o `ensureDir` do FTP e o pool de conexões ganharam suítes próprias, cobrindo cada uma das falhas acima (8 dos 10 testes novos falham contra o código anterior).
+
 ## 1.23.0 - 2026-07-22
 Remote Explorer e sincronização mais capazes.
 

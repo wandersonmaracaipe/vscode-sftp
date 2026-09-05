@@ -3,6 +3,7 @@
 	- [Erro: Failure - Solução Dois](#erro-failure---solução-dois)
 - [Erro: Conexão fechada](#erro-conexão-fechada)
 - [A extensão parou de enviar / "Client is closed"](#a-extensão-parou-de-enviar--client-is-closed)
+- [O envio automático parou / "501 No directory name"](#o-envio-automático-parou--501-no-directory-name)
 - [Arquivos temporários do editor sendo enviados](#arquivos-temporários-do-editor-sendo-enviados)
 - [Erro: Clicar em "Upload Changed Files" não funciona](#erro-clicar-em-upload-changed-files-não-funciona)
 - [ENFILE: file table overflow ...](#enfile-file-table-overflow-)
@@ -89,6 +90,30 @@ O que acontecia: quando a conexão FTP era derrubada por um erro (tipicamente um
 A causa era sutil: a detecção de queda dependia dos eventos do socket, mas o `basic-ftp` remove todos os listeners **antes** de destruir o socket ao encerrar por erro — então o aviso nunca chegava. Agora o estado é consultado diretamente no cliente, sem depender de eventos, e uma conexão morta é substituída automaticamente na operação seguinte.
 
 Se você ainda vir isso na 1.22.1 ou posterior, [abra uma issue](https://github.com/wandersonmaracaipe/vscode-sftp/issues) com o log (`sftp.debug` em `true`).
+
+## O envio automático parou / "501 No directory name"
+
+**Sintoma:** o envio automático (ao salvar / observador) **para de funcionar**, mas **"Sincronizar Pasta"** continua funcionando. No log aparece algo como:
+
+```
+[error] i: 501 No directory name
+    at t.FTPContext._onControlSocketData (...)
+    ... upload c:\Projetos\Minha Pasta
+```
+
+Fechar e reabrir o editor resolve — até acontecer de novo.
+
+**Corrigido na 1.23.1.** Eram duas causas somadas:
+
+1. **`501 No directory name`** — ao garantir que a pasta de destino existe, a extensão subia a árvore de diretórios criando cada nível, e ia **um nível além**: acabava pedindo `MKD /` (criar a raiz). O servidor responde `501 No directory name`, e esse erro derrubava a transferência inteira. Agora a raiz nunca é criada — ela já existe — e uma pasta que o servidor recusa por já existir (cada servidor responde com um código diferente) é aceita depois de conferir com um `list`.
+
+2. **A pasta inteira sendo reenviada** — a data de modificação de uma pasta muda sempre que qualquer arquivo dentro dela muda, e o observador tratava esse evento como "envie esta pasta": um `upload` **recursivo do projeto todo** a cada arquivo salvo. Em FTP, onde as transferências são serializadas, isso ocupava a fila por muito tempo e os salvamentos seguintes ficavam esperando — parecia que o envio automático tinha morrido. Agora só uma pasta **recém-criada** é enviada; mudanças dentro dela chegam pelos eventos dos próprios arquivos.
+
+Junto vieram três proteções para que **nenhum** erro possa deixar a extensão parada até reiniciar:
+
+* Uma conexão que trava (por exemplo, um pedido de senha que ninguém responde) é abandonada depois de um tempo-limite, em vez de deixar toda operação seguinte esperando por ela para sempre.
+* Uma remessa do observador que não termina deixa de bloquear as próximas.
+* Novo comando **"SFTP: Reconectar (reiniciar conexões)"** — descarta todas as conexões e transferências pendentes. Se algo travar, use-o em vez de reiniciar o editor.
 
 ## Arquivos temporários do editor sendo enviados
 
